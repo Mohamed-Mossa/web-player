@@ -24,7 +24,7 @@ apps/web/              React + Vite app (PWA + Capacitor web layer)
   src/cloud/           Supabase auth, sync engine (outbox + pull), backup, devices / remote commands
   src/native/          Android bridge (back button, TV detection, voice search, OTA updates)
   android/             Capacitor Android project; ExoPlayerPlugin.java, TvBridgePlugin.java, MainActivity.java
-  e2e/                 Playwright tests (29)
+  e2e/                 Playwright tests (27)
 packages/core/         Pure TypeScript: Xtream client, M3U + XMLTV streaming parsers, title cleaner, subtitles,
                        Arabic-aware search normalization, diffing, sync merge rules (71 tests)
 workers/proxy/         Cloudflare Worker: locked proxy (signed tokens), HLS rewrite, TMDB + OpenSubtitles relay (9 tests)
@@ -51,7 +51,7 @@ Add an Xtream playlist with server `http://localhost:4010`, user `test`, passwor
 ```bash
 pnpm test        # unit + integration: core (71), proxy (9), RLS on Postgres (6), sync engine (4)
 pnpm typecheck
-pnpm e2e         # 29 Playwright tests; starts the mock server and the app itself
+pnpm e2e         # 27 Playwright tests; starts the mock server and the app itself
 ```
 
 ## Setup and deploy
