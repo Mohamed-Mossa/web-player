@@ -1,5 +1,9 @@
-import { Tv } from 'lucide-react';
-import { useState } from 'react';
+import { Mic, Tv } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { isNative } from '../../lib/platform';
+import { nativeInfo, voiceSearch } from '../../native/bridge';
+import { Button } from '../../components/ui';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useSearch, type SearchHit } from '../../data/search';
@@ -8,10 +12,20 @@ import { Empty, Img, SectionTitle, Spinner } from '../../components/ui';
 import { PosterCard } from '../../components/cards';
 
 export function SearchPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const nav = useNavigate();
   const [q, setQ] = useState('');
+  const [params, setParams] = useSearchParams();
   const { hits, building } = useSearch(q);
+  const canVoice = isNative() && nativeInfo.voice;
+  const listen = () => voiceSearch(i18n.language === 'ar' ? 'ar' : 'en').then((text) => text && setQ(text)).catch(() => {});
+  // the remote's microphone button opens /search?voice=1
+  useEffect(() => {
+    if (params.get('voice') === '1' && canVoice) {
+      setParams({}, { replace: true });
+      void listen();
+    }
+  }, [params]); // eslint-disable-line react-hooks/exhaustive-deps
   const groups = {
     movie: hits.filter((h) => h.kind === 'movie').slice(0, 40),
     series: hits.filter((h) => h.kind === 'series').slice(0, 40),
@@ -22,8 +36,11 @@ export function SearchPage() {
   return (
     <div className="scroll-thin h-full overflow-y-auto">
       <FocusSection className="mx-auto max-w-7xl px-4 py-6 md:px-10 md:py-10">
-        <div className="max-w-2xl">
-          <TextField value={q} onChange={setQ} placeholder={t('search.placeholder')} autoFocus testId="search-input" dir="auto" />
+        <div className="flex max-w-2xl items-end gap-2">
+          <div className="flex-1">
+            <TextField value={q} onChange={setQ} placeholder={t('search.placeholder')} autoFocus testId="search-input" dir="auto" />
+          </div>
+          {canVoice && <Button title={t('search.voice')} icon={<Mic className="size-5" />} onClick={listen} className="!py-3" />}
         </div>
         {building && <p className="mt-6 inline-flex items-center gap-2 text-sm text-muted"><Spinner className="size-4" />{t('search.building')}</p>}
         {!q.trim() && !building && <Empty title={t('search.empty')} />}

@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useApp, type LayoutMode } from '../state/app';
 
+let nativeTv = false;
+export const setNativeTv = (v: boolean) => {
+  nativeTv = v;
+};
+
 const TV_UA = /Android TV|AFT[A-Z0-9]|BRAVIA|SmartTV|SMART-TV|GoogleTV|Chromecast|AndroidTV|Leanback|MiBOX|SHIELD/i;
 
 export function detectLayout(): LayoutMode {
   const params = new URLSearchParams(location.search);
   const forced = params.get('layout');
   if (forced === 'tv' || forced === 'desktop' || forced === 'mobile') return forced;
-  if (TV_UA.test(navigator.userAgent)) return 'tv';
+  if (nativeTv || TV_UA.test(navigator.userAgent)) return 'tv';
   const coarse = matchMedia('(pointer: coarse)').matches;
   if (coarse && Math.min(screen.width, screen.height) < 820) return 'mobile';
   if (innerWidth < 720) return 'mobile';

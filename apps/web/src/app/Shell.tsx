@@ -33,6 +33,8 @@ function useBackKey() {
         const cur = getCurrentFocusKey();
         if (!cur || cur === 'SN:ROOT') setFocus('nav-rail');
       }
+      if (e.key === 'Guide') return nav('/live?view=guide');
+      if (e.key === 'VoiceSearch') return nav('/search?voice=1');
       const typing = (e.target as HTMLElement)?.tagName === 'INPUT' || (e.target as HTMLElement)?.tagName === 'TEXTAREA';
       const isBack = BACK_KEYS.has(e.key) || e.keyCode === 10009 || e.keyCode === 461 || (e.key === 'Backspace' && !typing);
       if (!isBack || e.defaultPrevented) return;

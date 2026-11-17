@@ -1,0 +1,83 @@
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/**'
+      - 'packages/**'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    env:
+      VITE_API_BASE: ${{ vars.API_BASE }}
+      VITE_OTA_BASE: ${{ vars.OTA_BASE }}
+      VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+      VITE_SENTRY_DSN: ${{ vars.SENTRY_DSN }}
+      VERSION_CODE: ${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - run: pnpm install --frozen-lockfile
+      - name: Build web bundle
+        working-directory: apps/web
+        run: |
+          echo "VERSION_NAME=$(node -p "require('./package.json').version")-${GITHUB_SHA::7}" >> $GITHUB_ENV
+          pnpm exec vite build
+          pnpm exec cap sync android
+      - name: Signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > $RUNNER_TEMP/release.jks
+            echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> $GITHUB_ENV
+          else
+            echo "::warning::No signing key secret; building an unsigned-release fallback (debug-signed APK)."
+          fi
+      - name: Gradle build
+        working-directory: apps/web/android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          if [ -n "$ANDROID_KEYSTORE_PATH" ]; then
+            ./gradlew --no-daemon assembleRelease
+            cp app/build/outputs/apk/release/app-release.apk $RUNNER_TEMP/iptv-player.apk
+          else
+            ./gradlew --no-daemon assembleDebug
+            cp app/build/outputs/apk/debug/app-debug.apk $RUNNER_TEMP/iptv-player.apk
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iptv-player-${{ env.VERSION_NAME }}
+          path: ${{ runner.temp }}/iptv-player.apk
+      - name: Publish to the "android-latest" release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view android-latest >/dev/null 2>&1 || gh release create android-latest --title "Android (latest build)" --notes "Built automatically from main." --prerelease
+          gh release upload android-latest $RUNNER_TEMP/iptv-player.apk --clobber
+          gh release edit android-latest --notes "Version ${VERSION_NAME} (build ${VERSION_CODE}), commit ${GITHUB_SHA::7}. Download iptv-player.apk below."

@@ -39,7 +39,7 @@ export const en = {
     similar: 'Similar titles', inLibrary: 'In your playlists', seasons: 'Seasons', episodes: 'Episodes', season: 'Season {{n}}',
     alsoIn: 'Also available in', director: 'Director', notFound: 'This title is no longer in the playlist.',
   },
-  search: { placeholder: 'Search movies, series, channels…', empty: 'Type to search across all playlists', none: 'No results for “{{q}}”', building: 'Preparing search…' },
+  search: { voice: 'Voice search', placeholder: 'Search movies, series, channels…', empty: 'Type to search across all playlists', none: 'No results for “{{q}}”', building: 'Preparing search…' },
   profiles: {
     who: "Who's watching?", add: 'Add profile', edit: 'Edit profile', name: 'Profile name', pin: 'PIN (optional, 4 digits)',
     enterPin: 'Enter PIN for {{name}}', wrongPin: 'Wrong PIN', removePin: 'Remove PIN', setPin: 'Set PIN', manage: 'Manage profiles', me: 'Me',
@@ -76,6 +76,7 @@ export const en = {
     layoutMobile: 'Mobile', proxy: 'Proxy URL (web version)', proxyHint: 'Your Cloudflare Worker address. Leave empty on Android.',
     refresh: 'Update catalog every', hours: '{{count}} hours', playlists: 'Playlists', profiles: 'Profiles', about: 'About',
     version: 'Version', build: 'Build', updateReady: 'A new version is ready', reload: 'Reload',
+    afr: 'Match TV refresh rate to the video (Android TV)',
     playback: 'Playback', buffer: 'Buffer size', bufferValue: '{{s}} s', autoplayNext: 'Autoplay next episode',
     prefAudio: 'Preferred audio', prefSubs: 'Preferred subtitles', original: 'Original', arabic: 'Arabic', english: 'English',
   },

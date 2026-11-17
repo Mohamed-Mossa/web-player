@@ -41,7 +41,7 @@ export const ar: Dict = {
     similar: 'أعمال مشابهة', inLibrary: 'موجود عندك', seasons: 'المواسم', episodes: 'الحلقات', season: 'الموسم {{n}}',
     alsoIn: 'متاح كمان في', director: 'المخرج', notFound: 'العنوان ده مبقاش موجود في القائمة.',
   },
-  search: { placeholder: 'دوّر على فيلم أو مسلسل أو قناة…', empty: 'اكتب للبحث في كل القوائم', none: 'مفيش نتائج لـ «{{q}}»', building: 'جارٍ تجهيز البحث…' },
+  search: { voice: 'بحث بالصوت', placeholder: 'دوّر على فيلم أو مسلسل أو قناة…', empty: 'اكتب للبحث في كل القوائم', none: 'مفيش نتائج لـ «{{q}}»', building: 'جارٍ تجهيز البحث…' },
   profiles: {
     who: 'مين بيتفرج؟', add: 'إضافة حساب', edit: 'تعديل الحساب', name: 'اسم الحساب', pin: 'رمز PIN (اختياري، 4 أرقام)',
     enterPin: 'اكتب الـ PIN لحساب {{name}}', wrongPin: 'الرمز غلط', removePin: 'إلغاء الـ PIN', setPin: 'تعيين PIN', manage: 'إدارة الحسابات', me: 'أنا',
@@ -78,6 +78,7 @@ export const ar: Dict = {
     layoutMobile: 'موبايل', proxy: 'رابط البروكسي (نسخة الويب)', proxyHint: 'عنوان الـ Cloudflare Worker بتاعك. سيبه فاضي على أندرويد.',
     refresh: 'تحديث المحتوى كل', hours: '{{count}} ساعة', playlists: 'قوائم التشغيل', profiles: 'الحسابات', about: 'عن التطبيق',
     version: 'الإصدار', build: 'البناء', updateReady: 'فيه إصدار جديد جاهز', reload: 'إعادة تحميل',
+    afr: 'مطابقة معدل تحديث الشاشة مع الفيديو (أندرويد TV)',
     playback: 'التشغيل', buffer: 'حجم التخزين المؤقت', bufferValue: '{{s}} ث', autoplayNext: 'تشغيل الحلقة التالية تلقائيًا',
     prefAudio: 'لغة الصوت المفضلة', prefSubs: 'لغة الترجمة المفضلة', original: 'الأصلية', arabic: 'العربية', english: 'الإنجليزية',
   },

@@ -3,7 +3,8 @@ import { create } from 'zustand';
 export const usePwa = create<{ needRefresh: boolean; update: (() => Promise<void>) | null }>()(() => ({ needRefresh: false, update: null }));
 
 export async function registerPwa() {
-  if (import.meta.env.DEV || !('serviceWorker' in navigator)) return;
+  // The Android app updates through OTA bundles (src/native/ota.ts), not the service worker.
+  if (import.meta.env.DEV || !('serviceWorker' in navigator) || (window as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()) return;
   const { registerSW } = await import('virtual:pwa-register');
   const updateSW = registerSW({
     immediate: true,

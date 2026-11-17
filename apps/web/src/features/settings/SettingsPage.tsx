@@ -49,6 +49,12 @@ export function SettingsPage() {
             <Chip active={s.prefAudio === 'ar'} onClick={() => s.set({ prefAudio: 'ar' })}>{t('settings.arabic')}</Chip>
             <Chip active={s.prefAudio === 'en'} onClick={() => s.set({ prefAudio: 'en' })}>{t('settings.english')}</Chip>
           </Group>
+          {isNative() && (
+            <Group title={t('settings.afr')}>
+              <Chip active={s.afr} onClick={() => s.set({ afr: true })}>{t('common.yes')}</Chip>
+              <Chip active={!s.afr} onClick={() => s.set({ afr: false })}>{t('common.no')}</Chip>
+            </Group>
+          )}
           <Group title={t('settings.prefSubs')}>
             <Chip active={s.prefSubs === 'off'} onClick={() => s.set({ prefSubs: 'off' })}>{t('player.off')}</Chip>
             <Chip active={s.prefSubs === 'ar'} onClick={() => s.set({ prefSubs: 'ar' })}>{t('settings.arabic')}</Chip>

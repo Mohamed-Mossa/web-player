@@ -5,6 +5,7 @@ import { nowNext, type EpgProgramme, type LiveItem } from '@iptv/core';
 import { db, type ChannelGroup, type EpgRow } from '../db/db';
 import { useCatalog } from './catalog';
 import { useEpgSync } from '../sync/epgSync';
+import { isNative } from '../lib/platform';
 
 export type ChannelRef = { playlistId: string; id: string };
 export const chKey = (c: ChannelRef) => `${c.playlistId}:${c.id}`;
@@ -107,11 +108,27 @@ export const useLiveCtx = create<LiveCtx>()((set) => ({
 }));
 
 // ---------- reminders ----------
+const notifId = (s: string) => Math.abs([...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7)) % 2_000_000_000;
+
 export async function toggleReminder(r: { profileId: string; playlistId: string; channelId: string; channelName: string; title: string; start: number; stop: number }) {
   const id = `${r.profileId}:${r.playlistId}:${r.channelId}:${r.start}`;
-  if (await db.reminders.get(id)) return db.reminders.delete(id);
-  if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {});
+  const native = isNative();
+  if (await db.reminders.get(id)) {
+    if (native) void import('@capacitor/local-notifications').then(({ LocalNotifications }) => LocalNotifications.cancel({ notifications: [{ id: notifId(id) }] })).catch(() => {});
+    return db.reminders.delete(id);
+  }
   await db.reminders.put({ id, ...r });
+  if (native) {
+    // A system notification fires even if the app is closed; tapping it opens the channel.
+    const { LocalNotifications } = await import('@capacitor/local-notifications');
+    const perm = await LocalNotifications.checkPermissions();
+    if (perm.display !== 'granted') await LocalNotifications.requestPermissions();
+    await LocalNotifications.schedule({
+      notifications: [{ id: notifId(id), title: r.title, body: r.channelName, schedule: { at: new Date(r.start - 30_000), allowWhileIdle: true }, extra: { path: `/live/${r.playlistId}/${r.channelId}` } }],
+    }).catch(() => {});
+  } else if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission().catch(() => {});
+  }
 }
 
 export function useReminderIds(profileId: string | null) {

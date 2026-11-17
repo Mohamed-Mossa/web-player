@@ -74,3 +74,10 @@ html[data-layout='tv'] {
   scrollbar-width: thin;
   scrollbar-color: var(--color-line) transparent;
 }
+
+/* Android: ExoPlayer draws under the WebView; make the page see-through while a video is open. */
+html.native-video,
+html.native-video body,
+html.native-video #root {
+  background: transparent !important;
+}

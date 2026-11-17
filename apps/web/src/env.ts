@@ -15,3 +15,9 @@ export const TMDB_IMG: string =
 
 /** Proxy for provider requests on the web build (normally the same Worker). Empty = direct. */
 export const PROXY_BASE: string = (import.meta.env.VITE_PROXY_BASE as string | undefined)?.replace(/\/$/, '') ?? '';
+
+/** Where the Android app looks for over-the-air web bundles (the Pages site). */
+export const OTA_BASE: string = (import.meta.env.VITE_OTA_BASE as string | undefined)?.replace(/\/$/, '') ?? '';
+
+/** Bump when the web code starts needing newer native (Java) code; must match TvBridgePlugin.NATIVE_API. */
+export const NATIVE_API = 1;

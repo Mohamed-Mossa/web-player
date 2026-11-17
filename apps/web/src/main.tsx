@@ -6,6 +6,7 @@ import { App } from './app/App';
 import { initSpatialNav, setSpatialRtl } from './nav/focus';
 import { useApp } from './state/app';
 import { registerPwa } from './lib/pwa';
+import { initNative } from './native/bridge';
 
 initSpatialNav(useApp.getState().lang === 'ar');
 useApp.subscribe((s, prev) => {
@@ -13,8 +14,10 @@ useApp.subscribe((s, prev) => {
 });
 registerPwa();
 
-createRoot(document.getElementById('root')!).render(
+initNative().finally(() =>
+  createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
   </StrictMode>,
+  ),
 );

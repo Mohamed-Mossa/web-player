@@ -34,7 +34,8 @@ interface AppState {
   subtitle: SubtitleStyle;
   prefAudio: 'auto' | 'ar' | 'en';
   prefSubs: 'off' | 'ar' | 'en';
-  set: (patch: Partial<Pick<AppState, 'bufferSec' | 'autoplayNext' | 'subtitle' | 'prefAudio' | 'prefSubs'>>) => void;
+  afr: boolean;
+  set: (patch: Partial<Pick<AppState, 'bufferSec' | 'autoplayNext' | 'subtitle' | 'prefAudio' | 'prefSubs' | 'afr'>>) => void;
   setLang: (l: Lang) => void;
   setLayoutOverride: (m: LayoutMode | null) => void;
   setProxyBase: (s: string) => void;
@@ -57,6 +58,7 @@ export const useApp = create<AppState>()(
       subtitle: { size: 'm', color: '#ffffff', background: 'shadow' },
       prefAudio: 'auto',
       prefSubs: 'off',
+      afr: true,
       set: (patch) => set(patch),
       setLang: (lang) => set({ lang }),
       setLayoutOverride: (layoutOverride) => set({ layoutOverride }),
