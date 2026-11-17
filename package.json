@@ -1,0 +1,15 @@
+{
+  "name": "iptv",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "dev": "pnpm --filter @iptv/web dev",
+    "mock": "node tools/mock-server/server.mjs",
+    "build": "pnpm --filter @iptv/web build",
+    "test": "pnpm -r --if-present test",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "e2e": "pnpm --filter @iptv/web e2e"
+  }
+}

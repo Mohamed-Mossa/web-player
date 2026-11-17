@@ -1,0 +1,8 @@
+node_modules
+dist
+.env
+.env.local
+test-results
+playwright-report
+*.log
+apps/web/dev-dist
