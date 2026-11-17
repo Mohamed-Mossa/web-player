@@ -48,6 +48,14 @@ test('resume prompt continues from the saved position', async ({ page }) => {
   await remote(page, 'Escape'); // hide controls if shown
   await remote(page, 'Escape'); // exit the player
   await expect(page.getByTestId('player')).toHaveCount(0);
+  // the position is written to IndexedDB on exit; wait for it before reloading the page
+  await expect.poll(() => page.evaluate(() => new Promise<number>((r) => {
+    const q = indexedDB.open('iptv');
+    q.onsuccess = () => {
+      const g = q.result.transaction('progress').objectStore('progress').getAll();
+      g.onsuccess = () => r(Math.max(0, ...g.result.map((x: { positionSec: number }) => x.positionSec)));
+    };
+  }))).toBeGreaterThan(19);
   await page.goto(`/play/movie/${pid}/10000`);
   await expect(page.getByTestId('resume-dialog')).toBeVisible();
   await page.keyboard.press('Enter'); // "Resume" is focused
