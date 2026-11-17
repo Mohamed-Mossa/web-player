@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable, type Table } from 'dexie';
 import type {
-  AccountInfo, Category, Kind, LiveItem, PlaylistType, SeriesDetail, SeriesItem, VodItem,
+  AccountInfo, Category, EpgProgramme, Kind, LiveItem, PlaylistType, SeriesDetail, SeriesItem, VodItem,
 } from '@iptv/core';
 
 export interface Playlist {
@@ -16,6 +16,34 @@ export interface Playlist {
   lastSyncAt?: number;
   syncError?: string;
   counts?: { movie: number; series: number; live: number };
+  epgUpdatedAt?: number;
+  epgError?: string;
+  epgCount?: number;
+}
+
+export interface EpgRow extends EpgProgramme {
+  playlistId: string;
+  v: number; // import run stamp; older rows are removed after a refresh
+}
+
+export interface ChannelGroup {
+  id: string;
+  profileId: string;
+  name: string;
+  order: number;
+  channels: { playlistId: string; id: string }[];
+}
+
+export interface Reminder {
+  id: string;
+  profileId: string;
+  playlistId: string;
+  channelId: string; // live stream id
+  channelName: string;
+  title: string;
+  start: number;
+  stop: number;
+  notified?: boolean;
 }
 
 export interface SecretRow {
@@ -126,6 +154,9 @@ export class IptvDB extends Dexie {
   tmdb!: EntityTable<TmdbCacheRow, 'key'>;
   searchIndex!: EntityTable<SearchIndexRow, 'id'>;
   syncMeta!: Table<SyncMeta, [string, string]>;
+  epg!: Table<EpgRow, [string, string, number]>;
+  channelGroups!: EntityTable<ChannelGroup, 'id'>;
+  reminders!: EntityTable<Reminder, 'id'>;
 
   constructor(name = 'iptv') {
     super(name);
@@ -145,6 +176,11 @@ export class IptvDB extends Dexie {
       tmdb: '&key, fetchedAt',
       searchIndex: '&id',
       syncMeta: '&[playlistId+kind], playlistId',
+    });
+    this.version(2).stores({
+      epg: '&[playlistId+channelId+start], [playlistId+channelId], playlistId, stop',
+      channelGroups: '&id, profileId',
+      reminders: '&id, profileId, start',
     });
   }
 }

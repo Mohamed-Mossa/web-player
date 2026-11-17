@@ -5,6 +5,7 @@ import { URL, fileURLToPath } from 'node:url';
 import { createReadStream, readdirSync, statSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { makeMedia } from './make-media.mjs';
+import { gzipSync } from 'node:zlib';
 
 const MEDIA = join(dirname(fileURLToPath(import.meta.url)), 'media');
 makeMedia(MEDIA);
@@ -189,6 +190,31 @@ function tmdbDetail(type, id, lang) {
   };
 }
 
+function xmltv() {
+  const pad = (n) => String(n).padStart(2, '0');
+  const fmt = (ms) => { const d = new Date(ms); return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}00 +0000`; };
+  const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const hour = 3600_000;
+  const base = Math.floor(Date.now() / hour) * hour - 24 * hour;
+  const SHOWS = ['Morning News', 'نشرة الأخبار', 'Cooking Time', 'مسلسل السهرة', 'Football Live', 'فيلم السهرة', 'Documentary', 'Kids Club'];
+  const out = ['<?xml version="1.0" encoding="UTF-8"?>', '<tv generator-info-name="mock">'];
+  const chans = live.slice(0, 300);
+  for (const c of chans) out.push(`<channel id="${c.epg_channel_id}"><display-name>${esc(c.name)}</display-name></channel>`);
+  for (const [ci, c] of chans.entries()) {
+    let t = base;
+    let k = ci;
+    while (t < base + 72 * hour) {
+      const len = (k % 3 === 0 ? 60 : 30) * 60_000;
+      const title = `${SHOWS[k % SHOWS.length]}`;
+      out.push(`<programme start="${fmt(t)}" stop="${fmt(t + len)}" channel="${c.epg_channel_id}"><title>${esc(title)}</title><desc>${esc(`About ${title} (${ci}).`)}</desc></programme>`);
+      t += len;
+      k++;
+    }
+  }
+  out.push('</tv>');
+  return out.join('\n');
+}
+
 const json = (res, data, status = 200) => {
   res.writeHead(status, { 'content-type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(data));
@@ -322,6 +348,15 @@ const server = http.createServer(async (req, res) => {
   }
   if ((m = /^\/tmdb\/3\/search\/(movie|tv)$/.exec(u.pathname))) return json(res, tmdbSearch(q, m[1]));
   if ((m = /^\/tmdb\/3\/(movie|tv)\/(\d+)$/.exec(u.pathname))) return json(res, tmdbDetail(m[1], m[2], q.get('language')));
+  if (u.pathname === '/xmltv.php') {
+    res.writeHead(200, { 'content-type': 'application/xml; charset=utf-8' });
+    return res.end(xmltv());
+  }
+  if (u.pathname === '/epg.xml.gz') {
+    res.writeHead(200, { 'content-type': 'application/gzip' });
+    return res.end(gzipSync(xmltv()));
+  }
+  if (/^\/timeshift\/test\/test\//.test(u.pathname)) return sendFile(req, res, join(MEDIA, 'vod.mp4'), 'video/mp4');
   if (u.pathname === '/os/subtitles') {
     return json(res, { data: [
       { id: '1', attributes: { language: 'ar', release: `${q.get('query')} WEB-DL`, download_count: 900, files: [{ file_id: 101, file_name: 'ar.srt' }] } },

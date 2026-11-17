@@ -13,7 +13,10 @@ import { SearchPage } from '../features/search/SearchPage';
 import { AddSourcePage, SourcesPage } from '../features/sources/SourcesPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { ProfilesPage, ensureDefaultProfile, useProfiles } from '../features/profiles/ProfilesPage';
-import { LiveChannelPage } from '../features/live/LiveChannelPage';
+import { LivePage } from '../features/live/LivePage';
+import { LivePlayerScreen } from '../features/live/LivePlayerScreen';
+import { MultiView } from '../features/live/MultiView';
+import { ReminderWatcher } from '../components/Reminders';
 import { Spinner } from '../components/ui';
 import { PlayerScreen } from '../player/ui/PlayerScreen';
 
@@ -53,9 +56,12 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <ProfileGate>
+          <ReminderWatcher />
           <Routes>
             <Route path="/profiles" element={<ProfilesPage />} />
             <Route path="/play/:kind/:playlistId/:id" element={<PlayerScreen />} />
+            <Route path="/live/:playlistId/:id" element={<LivePlayerScreen />} />
+            <Route path="/multiview" element={<MultiView />} />
             <Route
               path="*"
               element={
@@ -65,10 +71,9 @@ export function App() {
                     <Route path="/search" element={<SearchPage />} />
                     <Route path="/movies" element={<CatalogPage key="movie" kind="movie" />} />
                     <Route path="/series" element={<CatalogPage key="series" kind="series" />} />
-                    <Route path="/live" element={<CatalogPage key="live" kind="live" />} />
+                    <Route path="/live" element={<LivePage />} />
                     <Route path="/movie/:playlistId/:id" element={<DetailsPage key="m" kind="movie" />} />
                     <Route path="/series/:playlistId/:id" element={<DetailsPage key="s" kind="series" />} />
-                    <Route path="/live/:playlistId/:id" element={<LiveChannelPage />} />
                     <Route path="/sources" element={<SourcesPage />} />
                     <Route path="/sources/add" element={<AddSourcePage />} />
                     <Route path="/settings" element={<SettingsPage />} />

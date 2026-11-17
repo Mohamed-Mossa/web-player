@@ -6,3 +6,4 @@ export * from './m3u';
 export * from './xtream';
 export * from './duplicates';
 export * from './subtitles';
+export * from './xmltv';

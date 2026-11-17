@@ -46,6 +46,13 @@ export const ar: Dict = {
     who: 'مين بيتفرج؟', add: 'إضافة حساب', edit: 'تعديل الحساب', name: 'اسم الحساب', pin: 'رمز PIN (اختياري، 4 أرقام)',
     enterPin: 'اكتب الـ PIN لحساب {{name}}', wrongPin: 'الرمز غلط', removePin: 'إلغاء الـ PIN', setPin: 'تعيين PIN', manage: 'إدارة الحسابات', me: 'أنا',
   },
+  live: {
+    favorites: 'المفضلة', newGroup: 'مجموعة جديدة', groupName: 'اسم المجموعة', deleteGroup: 'حذف المجموعة', emptyGroup: 'مفيش قنوات هنا لسه. ضيف قنوات من المشغّل.',
+    channels: 'القنوات', guide: 'دليل البرامج', multiview: 'عرض متعدد', epgUpdating: 'جارٍ تحديث الدليل…', noEpg: 'مفيش معلومات عن البرامج',
+    catchup: 'إعادة', next: 'التالي', channelList: 'قائمة القنوات', lastChannel: 'القناة السابقة', goLive: 'ارجع للبث المباشر', addToGroup: 'ضيف لمجموعة',
+    noGroups: 'اعمل مجموعة الأول من شاشة القنوات.', startsNow: 'بيبدأ دلوقتي على {{ch}}', watch: 'شاهد',
+    pickChannel: 'اختار قناة', maxConnWarn: 'اشتراكك بيسمح بـ {{n}} بث في نفس الوقت؛ المربعات الزيادة ممكن متشتغلش.',
+  },
   player: {
     play: 'تشغيل', pause: 'إيقاف مؤقت', back10: 'رجوع 10 ثواني', fwd10: 'تقديم 10 ثواني', next: 'الحلقة التالية',
     tracks: 'الصوت والترجمة', audio: 'الصوت', subtitles: 'الترجمة', quality: 'الجودة', off: 'إيقاف', speed: 'السرعة',

@@ -42,6 +42,7 @@ function getWorker() {
       queryClient.invalidateQueries({ queryKey: ['search'] });
       waiters.get(m.playlistId)?.resolve();
       waiters.delete(m.playlistId);
+      import('./epgSync').then((x) => x.syncEpg(m.playlistId)).catch(() => {});
     }
     if (m.type === 'error') {
       await db.playlists.update(m.playlistId, { syncError: m.code });
@@ -91,4 +92,6 @@ export async function backgroundRefresh() {
       await syncPlaylist(p.id).catch(() => {});
     }
   }
+  const { refreshStaleEpg } = await import('./epgSync');
+  await refreshStaleEpg();
 }

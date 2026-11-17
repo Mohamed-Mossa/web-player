@@ -6,6 +6,7 @@ import {
 import type { Table } from 'dexie';
 import { db, catalogTable } from '../db/db';
 import { HttpError, fetchJson, fetchWithTimeout, type NetConfig } from '../lib/http';
+import { saveSecret } from '../lib/crypto';
 
 export type SyncRequest = { type: 'sync'; playlistId: string; secret: PlaylistSecret; net: NetConfig };
 export type SyncMessage =
@@ -79,6 +80,7 @@ self.onmessage = async (ev: MessageEvent<SyncRequest>) => {
       snap = await client.snapshot(playlistId, (step) => post({ type: 'progress', playlistId, step }));
     } else {
       snap = await m3uSnapshot(playlistId, secret.url, net);
+      if (snap.epgUrl && !secret.epgUrl) await saveSecret(playlistId, { ...secret, epgUrl: snap.epgUrl });
     }
     const changed = await save(playlistId, snap);
     post({

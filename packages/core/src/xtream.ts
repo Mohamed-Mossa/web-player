@@ -3,6 +3,7 @@ import type {
 } from './models';
 import { cleanTitle } from './titleCleaner';
 import { hashString } from './hash';
+import { zonedParts } from './xmltv';
 
 export type FetchJson = (url: string) => Promise<unknown>;
 
@@ -269,6 +270,14 @@ export class XtreamClient {
     const path = kind === 'movie' ? 'movie' : kind === 'series' ? 'series' : 'live';
     const e = ext || (kind === 'live' ? 'm3u8' : 'mp4');
     return `${this.creds.server}/${path}/${u}/${p}/${id}.${e}`;
+  }
+
+  /** Catch-up URL for a programme starting at epoch `startMs`; Xtream expects the server's local time. */
+  catchupUrl(id: string, startMs: number, durationMin: number, serverTz?: string): string {
+    const p = zonedParts(startMs, serverTz);
+    const u = encodeURIComponent(this.creds.username);
+    const pw = encodeURIComponent(this.creds.password);
+    return `${this.creds.server}/timeshift/${u}/${pw}/${durationMin}/${p.y}-${p.mo}-${p.d}:${p.h}-${p.mi}/${id}.ts`;
   }
 
   /** Catch-up URL; start is the programme start in the server's local time. */

@@ -44,6 +44,13 @@ export const en = {
     who: "Who's watching?", add: 'Add profile', edit: 'Edit profile', name: 'Profile name', pin: 'PIN (optional, 4 digits)',
     enterPin: 'Enter PIN for {{name}}', wrongPin: 'Wrong PIN', removePin: 'Remove PIN', setPin: 'Set PIN', manage: 'Manage profiles', me: 'Me',
   },
+  live: {
+    favorites: 'Favorites', newGroup: 'New group', groupName: 'Group name', deleteGroup: 'Delete group', emptyGroup: 'No channels here yet. Add channels from the player.',
+    channels: 'Channels', guide: 'Guide', multiview: 'Multi-view', epgUpdating: 'Updating guide…', noEpg: 'No programme information',
+    catchup: 'CATCH-UP', next: 'Next', channelList: 'Channel list', lastChannel: 'Last channel', goLive: 'Back to live', addToGroup: 'Add to group',
+    noGroups: 'Create a group first from the Live TV screen.', startsNow: 'Starting now on {{ch}}', watch: 'Watch',
+    pickChannel: 'Choose a channel', maxConnWarn: 'Your subscription allows {{n}} streams at a time; extra tiles may fail.',
+  },
   player: {
     play: 'Play', pause: 'Pause', back10: 'Back 10 seconds', fwd10: 'Forward 10 seconds', next: 'Next episode',
     tracks: 'Audio & subtitles', audio: 'Audio', subtitles: 'Subtitles', quality: 'Quality', off: 'Off', speed: 'Speed',
