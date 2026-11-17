@@ -2,7 +2,6 @@ import clsx from 'clsx';
 import { AlertTriangle, ArrowLeft, Plus, Volume2, VolumeX, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import type { LiveItem } from '@iptv/core';
 import { usePlaylists } from '../../data/catalog';
 import { chKey, useAllChannels } from '../../data/live';
@@ -11,11 +10,12 @@ import { Button, Chip, Modal } from '../../components/ui';
 import { resolveStream } from '../../player/resolve';
 import { WebPlayer } from '../../player/webPlayer';
 import { normalizeText } from '@iptv/core';
+import { useGoBack } from '../../lib/nav';
 
 /** Desktop multi-view: 2–4 live channels at once; audio follows the selected tile. */
 export function MultiView() {
   const { t } = useTranslation();
-  const nav = useNavigate();
+  const goBack = useGoBack();
   const playlists = usePlaylists();
   const all = useAllChannels();
   const [count, setCount] = useState(4);
@@ -32,7 +32,7 @@ export function MultiView() {
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black" data-testid="multiview">
       <FocusSection focusKey="mv-top" className="flex items-center gap-3 border-b border-white/10 px-4 py-2">
-        <Button variant="ghost" icon={<ArrowLeft className="size-4 rtl:rotate-180" />} onClick={() => nav(-1)}>{t('common.back')}</Button>
+        <Button variant="ghost" icon={<ArrowLeft className="size-4 rtl:rotate-180" />} onClick={() => goBack('/live')}>{t('common.back')}</Button>
         <span className="font-semibold text-white">{t('live.multiview')}</span>
         <div className="ms-4 flex gap-1.5">
           {[2, 3, 4].map((n) => <Chip key={n} testId={`mv-${n}`} active={count === n} onClick={() => setCount(n)}>{n}</Chip>)}

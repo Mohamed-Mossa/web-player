@@ -11,6 +11,7 @@ import { useApp } from '../state/app';
 import { Avatar, useProfiles } from '../features/profiles/ProfilesPage';
 import { Button } from '../components/ui';
 import { ScreenSaver } from '../components/ScreenSaver';
+import { useGoBack } from '../lib/nav';
 
 const ITEMS = [
   { to: '/', icon: Home, label: 'nav.home', match: (p: string) => p === '/' },
@@ -26,6 +27,7 @@ const BACK_KEYS = new Set(['Escape', 'GoBack', 'BrowserBack', 'XF86Back']);
 /** Remote Back / Esc / Backspace (outside text fields) goes back in history. */
 function useBackKey() {
   const nav = useNavigate();
+  const goBack = useGoBack();
   const loc = useLocation();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -40,12 +42,11 @@ function useBackKey() {
       if (!isBack || e.defaultPrevented) return;
       if (loc.pathname === '/') return;
       e.preventDefault();
-      if (history.length > 1) nav(-1);
-      else nav('/');
+      goBack('/');
     };
     addEventListener('keydown', onKey);
     return () => removeEventListener('keydown', onKey);
-  }, [nav, loc.pathname]);
+  }, [nav, goBack, loc.pathname]);
 }
 
 export function Shell({ children }: { children: ReactNode }) {

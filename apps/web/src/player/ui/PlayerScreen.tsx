@@ -19,6 +19,7 @@ import {
   CtrlButton, ErrorOverlay, NextUpCard, ResumeDialog, SeekBar, SleepPanel, SpeedPanel, SubtitleOverlay, TracksPanel,
   type ExternalSubs, type SleepChoice,
 } from './parts';
+import { useGoBack } from '../../lib/nav';
 
 type Panel = 'tracks' | 'speed' | 'sleep' | null;
 
@@ -134,18 +135,18 @@ export function PlayerScreen() {
   }, [player, state.tracks, prefAudio, prefSubs]);
 
   // 3) Save progress every 5 s, on pause and on exit
-  const persist = useCallback(() => {
-    if (!profileId || !loaded || live) return;
+  const persist = useCallback((): Promise<void> => {
+    if (!profileId || !loaded || live) return Promise.resolve();
     // Read from the last rendered state: on unmount the engine may already be torn down.
     const pos = stateRef.current.current;
     const dur = stateRef.current.duration;
-    if (pos < 1) return;
-    void saveProgress({
+    if (pos < 1) return Promise.resolve();
+    return saveProgress({
       profileId, kind: kind === 'episode' ? 'episode' : 'movie', playlistId, itemId: id, seriesId: loaded.seriesId,
       season: (loaded.item as Episode).season, episode: (loaded.item as Episode).episode,
       title: loaded.subtitle ? `${loaded.title} · ${loaded.subtitle}` : loaded.title, poster: loaded.poster,
       positionSec: pos, durationSec: dur, completed: stateRef.current.status === 'ended' ? true : undefined,
-    });
+    }).catch(() => {});
   }, [profileId, loaded, live, kind, playlistId, id, stateRef]);
   useEffect(() => {
     const iv = setInterval(() => stateRef.current.status === 'playing' && persist(), 5000);
@@ -245,11 +246,12 @@ export function PlayerScreen() {
     else player.pause();
   }, [player]);
   const seekBy = useCallback((d: number) => player && !live && player.seek(player.currentTime + d), [player, live]);
-  const exit = useCallback(() => {
-    persist();
+  const goBack = useGoBack();
+  const exit = useCallback(async () => {
     if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
-    nav(-1);
-  }, [persist, nav]);
+    await persist(); // before leaving: a page unload would abort the write
+    goBack(kind === 'episode' && seriesId ? `/series/${playlistId}/${seriesId}` : kind === 'movie' ? `/movie/${playlistId}/${id}` : '/');
+  }, [persist, goBack, kind, seriesId, playlistId, id]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

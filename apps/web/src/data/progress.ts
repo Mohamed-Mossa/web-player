@@ -1,3 +1,4 @@
+import Dexie from 'dexie';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Progress } from '../db/db';
 
@@ -9,7 +10,8 @@ export async function getProgress(profileId: string, kind: Progress['kind'], pla
 
 export async function saveProgress(p: Omit<Progress, 'completed' | 'lastWatchedAt'> & { completed?: boolean }) {
   const completed = p.completed ?? (p.durationSec > 0 && p.positionSec / p.durationSec >= DONE_RATIO);
-  await db.progress.put({ ...p, completed, lastWatchedAt: Date.now() });
+  // Called from key handlers and unmount cleanups: never join whatever Dexie transaction zone is current.
+  await Dexie.ignoreTransaction(() => db.progress.put({ ...p, completed, lastWatchedAt: Date.now() }));
 }
 
 export async function setWatched(p: Omit<Progress, 'completed' | 'lastWatchedAt' | 'positionSec' | 'durationSec'>, watched: boolean) {

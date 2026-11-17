@@ -18,6 +18,7 @@ import { Img, Spinner } from '../../components/ui';
 import { resolveStream } from '../../player/resolve';
 import { usePlayer, fmtTime } from '../../player/usePlayer';
 import { CtrlButton, ErrorOverlay, SeekBar, SidePanel, SleepPanel, SubtitleOverlay, TracksPanel, type ExternalSubs, type SleepChoice } from '../../player/ui/parts';
+import { useGoBack } from '../../lib/nav';
 
 const OSD_MS = 5000;
 const DIGIT_MS = 1500;
@@ -116,7 +117,8 @@ export function LivePlayerScreen() {
     },
     [all, zapTo],
   );
-  const exit = useCallback(() => nav(-1), [nav]);
+  const goBack = useGoBack();
+  const exit = useCallback(() => goBack('/live'), [goBack]);
   const togglePlay = useCallback(() => (player?.paused ? void player.play() : player?.pause()), [player]);
 
   // remote keys (when no panel is open)

@@ -15,12 +15,14 @@ import { Focusable, FocusSection } from '../../nav/focus';
 import { Button, Chip, Empty, Img, PosterFallback, SectionTitle, Spinner } from '../../components/ui';
 import { PosterCard } from '../../components/cards';
 import { SendToDevice } from '../../components/SendToDevice';
+import { useGoBack } from '../../lib/nav';
 
 export function DetailsPage({ kind }: { kind: 'movie' | 'series' }) {
   const { playlistId = '', id: rawId = '' } = useParams();
   const id = decodeURIComponent(rawId);
   const { t, i18n } = useTranslation();
   const nav = useNavigate();
+  const goBack = useGoBack();
   const profileId = useApp((s) => s.profileId);
   const item = useItem(kind, playlistId, id) as VodItem | SeriesItem | null | undefined;
   const fav = useIsFavorite(profileId, kind, playlistId, id);
@@ -42,7 +44,7 @@ export function DetailsPage({ kind }: { kind: 'movie' | 'series' }) {
   }, [catalog]);
 
   if (item === undefined) return <div className="flex h-full items-center justify-center"><Spinner className="size-8" /></div>;
-  if (item === null) return <Empty title={t('details.notFound')}><Button onClick={() => nav(-1)}>{t('common.back')}</Button></Empty>;
+  if (item === null) return <Empty title={t('details.notFound')}><Button onClick={() => goBack('/')}>{t('common.back')}</Button></Empty>;
 
   const poster = item.poster ?? tmdbImg(tm?.poster, 'w342');
   const backdrop = tmdbImg(tm?.backdrop, 'w1280');

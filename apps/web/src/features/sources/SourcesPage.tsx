@@ -10,6 +10,7 @@ import type { Playlist } from '../../db/db';
 import { useSync, syncPlaylist, checkAccount } from '../../sync/catalogSync';
 import { FocusSection, TextField } from '../../nav/focus';
 import { Button, Chip, Modal, Spinner } from '../../components/ui';
+import { useGoBack } from '../../lib/nav';
 
 export function SourcesPage() {
   const { t } = useTranslation();
@@ -125,6 +126,7 @@ function Info({ label, children, testId }: { label: string; children: React.Reac
 export function AddSourcePage() {
   const { t } = useTranslation();
   const nav = useNavigate();
+  const goBack = useGoBack();
   const [type, setType] = useState<'xtream' | 'm3u'>('xtream');
   const [name, setName] = useState('');
   const [server, setServer] = useState('');
@@ -188,7 +190,7 @@ export function AddSourcePage() {
         </div>
         {error && <p className="mt-4 rounded-xl bg-bad/10 p-3 text-sm text-bad" role="alert" data-testid="add-error">{error}</p>}
         <div className="mt-8 flex justify-end gap-2">
-          <Button onClick={() => nav(-1)}>{t('common.cancel')}</Button>
+          <Button onClick={() => goBack('/sources')}>{t('common.cancel')}</Button>
           <Button variant="primary" testId="connect" disabled={busy} onClick={submit} icon={busy ? <Spinner className="size-4" /> : undefined}>
             {busy ? t('sources.connecting') : t('sources.connect')}
           </Button>
