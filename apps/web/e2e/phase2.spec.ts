@@ -58,7 +58,8 @@ test('resume prompt continues from the saved position', async ({ page }) => {
   }))).toBeGreaterThan(19);
   await page.goto(`/play/movie/${pid}/10000`);
   await expect(page.getByTestId('resume-dialog')).toBeVisible();
-  await page.keyboard.press('Enter'); // "Resume" is focused
+  await expect(page.getByTestId('resume-yes')).toHaveAttribute('data-focused', 'true'); // remote lands on "Resume"
+  await page.keyboard.press('Enter');
   await waitTime(page, 19);
 });
 
