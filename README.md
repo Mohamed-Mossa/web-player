@@ -1,43 +1,41 @@
 # IPTV Player
 
 Cross-platform IPTV player for Android TV (remote/D-pad), desktop, phones and tablets.
-One React + TypeScript codebase ships as a PWA and (from phase 3) as a Capacitor app with a native ExoPlayer.
+One React + TypeScript codebase ships as a PWA (desktop, iPhone/iPad, any browser) and as an Android app
+(phones, tablets, Android TV) that plays through Media3 ExoPlayer.
 
 | Phase | Scope | Status |
 | --- | --- | --- |
-| 1 | Login (Xtream / M3U), account info, catalog sync, categories, grid, search, details, profiles, Arabic/English | **Done** |
-| 2 | Web player (hls.js, mpegts.js), subtitles, resume, next episode, PiP, Cast, AirPlay | Next |
-| 3 | Android + Android TV wrapper with Media3 ExoPlayer | |
-| 4 | Live TV + EPG (XMLTV), zapping, catch-up, multi-view | |
-| 5 | Supabase sync, Cloudflare Worker proxy, Pages deploy, OTA updates | |
+| 1 | Xtream/M3U login, account info, catalog sync (Web Worker → IndexedDB), categories, virtual grid, search, TMDB details, profiles, Arabic/English RTL | Done |
+| 2 | Web player: hls.js / mpegts.js, tracks, subtitles (SRT/VTT/OpenSubtitles), resume, next episode, PiP, Cast, AirPlay, sleep timer, auto-reconnect | Done |
+| 3 | Android + Android TV app: ExoPlayer under a transparent WebView, FFmpeg audio, remote keys, voice search, frame-rate matching, OTA updates | Done (built by GitHub Actions) |
+| 4 | Live TV: XMLTV guide, now/next, zapping, catch-up, channel groups, reminders, multi-view | Done |
+| 5 | Supabase sync, TV sign-in by QR, Send to TV, encrypted backup, proxy Worker, Pages deploy | Done (needs your accounts, see Setup) |
 
-The architecture and data model are in the design doc (Claude Docs: "IPTV Player — Architecture & Data Model").
+The architecture and data model are in the design doc ("IPTV Player — Architecture & Data Model").
 
 ## Repo layout
 
 ```text
-apps/web/            React + Vite PWA (also the Capacitor web layer from phase 3)
-  src/app/           shell, routes, profile gate
-  src/features/      home, catalog, details, search, sources, profiles, settings, live
-  src/workers/       catalogSync.worker.ts (download + diff into IndexedDB), search.worker.ts (MiniSearch)
-  src/db/            Dexie schema (IndexedDB)
-  src/nav/           spatial navigation (D-pad / remote / keyboard)
-  src/i18n/          en.ts, ar.ts
-  e2e/               Playwright tests
-packages/core/       Pure TypeScript, no UI: Xtream client, M3U parser, title cleaner,
-                     Arabic-aware normalization, diffing, cross-playlist merge (Vitest)
-tools/mock-server/   Mock Xtream + M3U + TMDB server with 50k items for development and tests
-workers/proxy/       Cloudflare Worker (phase 5)
-supabase/            migrations + edge functions (phase 5)
+apps/web/              React + Vite app (PWA + Capacitor web layer)
+  src/player/          PlayerAdapter, WebPlayer (hls.js/mpegts.js/<video>), NativePlayer (ExoPlayer bridge), player UI
+  src/features/        home, catalog, details, search, live (list, guide, live player, multi-view), sources, profiles, settings, account
+  src/workers/         catalog sync, EPG import, search index
+  src/cloud/           Supabase auth, sync engine (outbox + pull), backup, devices / remote commands
+  src/native/          Android bridge (back button, TV detection, voice search, OTA updates)
+  android/             Capacitor Android project; ExoPlayerPlugin.java, TvBridgePlugin.java, MainActivity.java
+  e2e/                 Playwright tests (29)
+packages/core/         Pure TypeScript: Xtream client, M3U + XMLTV streaming parsers, title cleaner, subtitles,
+                       Arabic-aware search normalization, diffing, sync merge rules (71 tests)
+workers/proxy/         Cloudflare Worker: locked proxy (signed tokens), HLS rewrite, TMDB + OpenSubtitles relay (9 tests)
+supabase/              SQL migration with row-level security (6 tests on PGlite), edge functions (secrets, device-login)
+tools/mock-server/     Mock Xtream/M3U/XMLTV/TMDB/OpenSubtitles server with real test streams (needs ffmpeg)
+.github/workflows/     ci.yml (tests + e2e), android.yml (APK → "android-latest" release), worker.yml (deploy Worker)
 ```
 
-## Requirements
-
-- Node.js 22+
-- pnpm 10 (`corepack enable` or `npm i -g pnpm`)
-- Google Chrome for the e2e tests (or set `CHROME_PATH`)
-
 ## Develop
+
+Requirements: Node.js 22+, pnpm 10, ffmpeg (for the mock server's test streams), Google Chrome (e2e).
 
 ```bash
 pnpm install
@@ -45,53 +43,100 @@ pnpm mock                         # terminal 1: mock server on http://localhost:
 pnpm --filter @iptv/web dev:mock  # terminal 2: app on http://localhost:5173
 ```
 
-In the app, add an Xtream playlist with server `http://localhost:4010`, user `test`, password `test`
-(or the M3U link `http://localhost:4010/playlist.m3u`).
+Add an Xtream playlist with server `http://localhost:4010`, user `test`, password `test`
+(or the M3U link `http://localhost:4010/playlist.m3u`). `?layout=tv` forces the 10-foot layout.
 
-Useful URL switches: `?layout=tv` forces the 10-foot TV layout, `?layout=mobile` the phone layout.
-
-### Environment variables (`apps/web/.env*`)
-
-| Variable | Meaning |
-| --- | --- |
-| `VITE_API_BASE` | Base URL of the Cloudflare Worker (TMDB/OpenSubtitles relay). Empty disables TMDB. |
-| `VITE_TMDB_IMG` | TMDB image CDN, default `https://image.tmdb.org/t/p`. |
-
-`.env.mock` points both at the mock server. The provider proxy URL for the web build is set inside the app (Settings → Proxy URL).
-
-## Tests
+### Tests
 
 ```bash
-pnpm test                          # unit tests (packages/core): parser, title cleaner, Xtream client, diff, search normalization
-pnpm --filter @iptv/web typecheck
-pnpm e2e                           # Playwright: starts the mock server and the app itself
+pnpm test        # unit + integration: core (71), proxy (9), RLS on Postgres (6), sync engine (4)
+pnpm typecheck
+pnpm e2e         # 29 Playwright tests; starts the mock server and the app itself
 ```
 
-The e2e suite covers: Xtream login with account info and a 50k-item sync, wrong password, M3U → Xtream
-upgrade, plain M3U parsing, virtualized grid + filters, hide/rename/reorder categories, typo-tolerant and
-Arabic search, details with TMDB data and seasons, favorites, D-pad navigation with Back, PIN profiles,
-and Arabic RTL.
+## Setup and deploy
 
-## Build
+You need free accounts on **Supabase**, **Cloudflare**, **TMDB** and (optionally) **OpenSubtitles** and **Sentry**.
+
+### 1. Supabase (sync + sign-in)
+
+1. Create a project at supabase.com. Note the **Project URL**, **anon key** and **project ref**.
+2. Authentication → URL configuration: set **Site URL** to your Pages URL (step 3), e.g. `https://web-player.pages.dev`.
+3. Apply the schema and deploy the functions (Supabase CLI):
+   ```bash
+   npx supabase login
+   npx supabase link --project-ref <project-ref>
+   npx supabase db push
+   npx supabase secrets set SECRETS_KEY=$(openssl rand -base64 32)
+   npx supabase functions deploy secrets
+   npx supabase functions deploy device-login --no-verify-jwt
+   ```
+4. Create your user: open the app → Settings → Account & sync → Create account.
+
+### 2. Cloudflare Worker (proxy for the web version + TMDB/OpenSubtitles)
 
 ```bash
-pnpm build        # apps/web/dist, includes the service worker and web manifest
+cd workers/proxy
+npx wrangler login
+npx wrangler secret put TOKEN_SECRET          # any long random string
+npx wrangler secret put SUPABASE_URL
+npx wrangler secret put SUPABASE_ANON_KEY
+npx wrangler secret put ALLOWED_USERS         # your Supabase user id or email (comma-separated)
+npx wrangler secret put TMDB_API_KEY          # themoviedb.org → Settings → API
+npx wrangler secret put OPENSUBTITLES_API_KEY # optional, opensubtitles.com → API consumers
+npx wrangler deploy
 ```
 
-## Deploy (set up in phase 5)
+Edit `ALLOWED_ORIGINS` in `wrangler.toml` to your Pages URL. The Worker refuses any request without a
+token, and it only gives tokens to users in `ALLOWED_USERS`, so it is not an open proxy. It sets
+`allow_custom_ports`, so providers on ports like 8080 or 25461 work. Optional: add `CLOUDFLARE_API_TOKEN` and
+`CLOUDFLARE_ACCOUNT_ID` as GitHub secrets and `worker.yml` deploys on every change.
 
-Cloudflare Pages, connected to the GitHub repo:
+### 3. Cloudflare Pages (web app, auto-deploy on every push to main)
 
-- Production branch: `main` (every push deploys)
+Workers & Pages → Create → Pages → Connect to Git → `Mohamed-Mossa/web-player`:
+
+- Production branch: `main`
 - Build command: `pnpm install --frozen-lockfile && pnpm --filter @iptv/web build`
 - Build output directory: `apps/web/dist`
-- Environment variables: `VITE_API_BASE` = your Worker URL, `NODE_VERSION` = `22`
+- Environment variables:
 
-The service worker checks for a new deploy every 30 minutes and shows an "update ready" prompt.
-Settings shows the app version and the git commit it was built from.
+| Name | Value |
+| --- | --- |
+| `NODE_VERSION` | `22` |
+| `VITE_API_BASE` | Worker URL, e.g. `https://iptv-proxy.<you>.workers.dev` |
+| `VITE_PROXY_BASE` | same Worker URL |
+| `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` | from step 1 |
+| `VITE_APP_URL` | your Pages URL (used in the TV sign-in QR code) |
+| `VITE_OTA_BASE` | your Pages URL (Android app updates) |
+| `VITE_SENTRY_DSN` | optional |
 
-## Security notes
+Every push to `main` deploys. Open browsers pick up the new service worker within 30 minutes and show a
+"new version" prompt. Settings shows the version and the commit it was built from.
 
-- Playlist credentials are encrypted with AES-GCM using a non-extractable key stored in IndexedDB;
-  nothing sensitive goes to localStorage. Stream URLs stored from M3U files have credentials replaced by placeholders.
-- Profile PINs are PBKDF2 hashes. They are a parental lock, not a security boundary.
+### 4. Android APK
+
+GitHub Actions builds the APK on every push and attaches it to the **android-latest** release:
+`https://github.com/Mohamed-Mossa/web-player/releases/download/android-latest/iptv-player.apk`
+
+- Add the same `VITE_*` values as GitHub **repository variables** (Settings → Secrets and variables →
+  Actions → Variables) named `API_BASE`, `OTA_BASE`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SENTRY_DSN`.
+- Add the signing key as **secrets**: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
+  `ANDROID_KEY_PASSWORD`, `ANDROID_KEY_ALIAS`. Without them the APK is debug-signed, and each build then
+  needs an uninstall before installing.
+- Install on Android TV: use the "Downloader" app (or `adb install iptv-player.apk`) with the link above.
+- After the first install, web changes reach the app as OTA bundles from Pages (`/ota/version.json`), so you
+  do not reinstall. Java/native changes need a new APK; bump `NATIVE_API` in `src/env.ts` and
+  `TvBridgePlugin.java` when the web code starts needing them.
+
+## Notes
+
+- **Codecs.** Browsers cannot play most MKV, AC3/DTS or HEVC streams; the web player says so and suggests the
+  Android app. ExoPlayer plays them, with FFmpeg audio decoders (Jellyfin's `media3-ffmpeg-decoder`, GPL-3.0).
+- **Proxy.** Only the web build uses the proxy. The Android app connects directly using native HTTP.
+  Cloudflare's terms limit serving video through Workers on free plans; heavy web viewing may need Workers Paid.
+- **Chromecast.** Works from Chrome (desktop/Android browser). Inside the Android app the Cast button is
+  hidden; use "Send to TV" between your own devices instead.
+- **Credentials** are AES-GCM encrypted on the device (non-extractable key) and in Supabase (server key in the
+  `secrets` function, bound to the user id). Backups are encrypted with your passphrase. PINs are PBKDF2 hashes
+  (a parental lock, not a security boundary).

@@ -1,4 +1,7 @@
-import { ChevronRight, ListVideo, Users } from 'lucide-react';
+import { ChevronRight, Cloud, ListVideo, Users } from 'lucide-react';
+import { BackupPanel } from './BackupPanel';
+import { cloudEnabled } from '../../cloud/supabase';
+import { useAuth } from '../../state/auth';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -15,6 +18,7 @@ export function SettingsPage() {
   const s = useApp();
   const pwa = usePwa();
   const [proxy, setProxy] = useState(s.proxyBase);
+  const email = useAuth((x) => x.email);
 
   return (
     <div className="scroll-thin h-full overflow-y-auto">
@@ -77,9 +81,12 @@ export function SettingsPage() {
         )}
 
         <div className="space-y-2">
+          {cloudEnabled && <LinkRow icon={<Cloud className="size-5" />} label={`${t('settings.account')}${email ? ` · ${email}` : ''}`} onClick={() => nav('/account')} testId="link-account" />}
           <LinkRow icon={<ListVideo className="size-5" />} label={t('settings.playlists')} onClick={() => nav('/sources')} testId="link-playlists" />
           <LinkRow icon={<Users className="size-5" />} label={t('settings.profiles')} onClick={() => nav('/profiles?manage=1')} testId="link-profiles" />
         </div>
+
+        <BackupPanel />
 
         <div className="rounded-2xl border border-line bg-surface p-5 text-sm">
           <p className="mb-3 text-xs font-semibold tracking-wide text-muted uppercase">{t('settings.about')}</p>

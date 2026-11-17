@@ -21,3 +21,9 @@ export const OTA_BASE: string = (import.meta.env.VITE_OTA_BASE as string | undef
 
 /** Bump when the web code starts needing newer native (Java) code; must match TvBridgePlugin.NATIVE_API. */
 export const NATIVE_API = 1;
+
+export const SUPABASE_URL: string = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? '';
+export const SUPABASE_ANON_KEY: string = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ?? '';
+export const SENTRY_DSN: string = (import.meta.env.VITE_SENTRY_DSN as string | undefined) ?? '';
+/** Public address of the web app (used in the TV sign-in QR code). */
+export const APP_URL: string = ((import.meta.env.VITE_APP_URL as string | undefined) ?? (typeof location !== 'undefined' ? location.origin : '')).replace(/\/$/, '');

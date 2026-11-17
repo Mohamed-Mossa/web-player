@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { isNative } from '../../lib/platform';
 import { nativeInfo, voiceSearch } from '../../native/bridge';
 import { Button } from '../../components/ui';
+import { SendToDevice } from '../../components/SendToDevice';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useSearch, type SearchHit } from '../../data/search';
@@ -14,13 +15,15 @@ import { PosterCard } from '../../components/cards';
 export function SearchPage() {
   const { t, i18n } = useTranslation();
   const nav = useNavigate();
-  const [q, setQ] = useState('');
   const [params, setParams] = useSearchParams();
+  const [q, setQ] = useState(params.get('q') ?? '');
   const { hits, building } = useSearch(q);
   const canVoice = isNative() && nativeInfo.voice;
   const listen = () => voiceSearch(i18n.language === 'ar' ? 'ar' : 'en').then((text) => text && setQ(text)).catch(() => {});
   // the remote's microphone button opens /search?voice=1
   useEffect(() => {
+    const incoming = params.get('q');
+    if (incoming !== null) setQ(incoming);
     if (params.get('voice') === '1' && canVoice) {
       setParams({}, { replace: true });
       void listen();
@@ -40,6 +43,7 @@ export function SearchPage() {
           <div className="flex-1">
             <TextField value={q} onChange={setQ} placeholder={t('search.placeholder')} autoFocus testId="search-input" dir="auto" />
           </div>
+          {q.trim() && <SendToDevice command={{ type: 'search', q }} label={t('remote.searchOnTv')} />}
           {canVoice && <Button title={t('search.voice')} icon={<Mic className="size-5" />} onClick={listen} className="!py-3" />}
         </div>
         {building && <p className="mt-6 inline-flex items-center gap-2 text-sm text-muted"><Spinner className="size-4" />{t('search.building')}</p>}

@@ -14,6 +14,7 @@ import { fmtTime } from '../../player/usePlayer';
 import { Focusable, FocusSection } from '../../nav/focus';
 import { Button, Chip, Empty, Img, PosterFallback, SectionTitle, Spinner } from '../../components/ui';
 import { PosterCard } from '../../components/cards';
+import { SendToDevice } from '../../components/SendToDevice';
 
 export function DetailsPage({ kind }: { kind: 'movie' | 'series' }) {
   const { playlistId = '', id: rawId = '' } = useParams();
@@ -118,6 +119,7 @@ export function DetailsPage({ kind }: { kind: 'movie' | 'series' }) {
                   {t('details.trailer')}
                 </Button>
               )}
+              <SendToDevice command={{ type: 'play', path: kind === 'movie' ? `/play/movie/${playlistId}/${encodeURIComponent(id)}` : target ? `/play/episode/${playlistId}/${encodeURIComponent(target.id)}?s=${encodeURIComponent(id)}` : `/series/${playlistId}/${encodeURIComponent(id)}`, title: item.title }} />
               {profileId && (
                 <Button
                   testId="favorite"

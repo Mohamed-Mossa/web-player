@@ -138,7 +138,22 @@ export interface SyncMeta {
   itemCount: number;
 }
 
+export interface OutboxRow {
+  seq?: number;
+  table: string;
+  key: string;
+  op: 'put' | 'del';
+  at: number;
+}
+
+export interface KvRow {
+  key: string;
+  data: unknown;
+}
+
 export class IptvDB extends Dexie {
+  outbox!: Table<OutboxRow, number>;
+  kv!: EntityTable<KvRow, 'key'>;
   playlists!: EntityTable<Playlist, 'id'>;
   secrets!: EntityTable<SecretRow, 'playlistId'>;
   keys!: EntityTable<KeyRow, 'id'>;
@@ -181,6 +196,10 @@ export class IptvDB extends Dexie {
       epg: '&[playlistId+channelId+start], [playlistId+channelId], playlistId, stop',
       channelGroups: '&id, profileId',
       reminders: '&id, profileId, start',
+    });
+    this.version(3).stores({
+      outbox: '++seq, [table+key]',
+      kv: '&key', // synced key/value data (UI settings)
     });
   }
 }

@@ -1,0 +1,9 @@
+# Supabase CLI project config (used by `supabase link`, `supabase db push`, `supabase functions deploy`).
+project_id = "iptv-player"
+
+[functions.secrets]
+verify_jwt = true
+
+[functions.device-login]
+# "start" and "poll" are called by a TV that is not signed in yet
+verify_jwt = false

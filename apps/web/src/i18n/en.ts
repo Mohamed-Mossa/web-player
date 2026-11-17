@@ -44,6 +44,20 @@ export const en = {
     who: "Who's watching?", add: 'Add profile', edit: 'Edit profile', name: 'Profile name', pin: 'PIN (optional, 4 digits)',
     enterPin: 'Enter PIN for {{name}}', wrongPin: 'Wrong PIN', removePin: 'Remove PIN', setPin: 'Set PIN', manage: 'Manage profiles', me: 'Me',
   },
+  account: {
+    title: 'Account & sync', notConfigured: 'Cloud sync is not set up for this build.', why: 'Sign in to sync playlists, favorites, progress and settings across your devices.',
+    withPhone: 'Sign in with phone (QR)', withPassword: 'Email & password', withLink: 'Email link', email: 'Email', signIn: 'Sign in', signUp: 'Create account',
+    sendLink: 'Send sign-in link', checkEmail: 'Check your email to continue.', scanQr: 'Scan with your phone, or open this address and enter the code:',
+    waiting: 'Waiting for approval…', syncing: 'Syncing…', syncError: 'Sync error', synced: 'Synced at {{t}}', devices: 'Signed-in devices', thisDevice: 'this device',
+    signOut: 'Sign out', linkTitle: 'Sign in a TV', linkSignInFirst: 'Sign in on this phone first, then approve the TV.', approve: 'Approve TV', linked: 'Done. The TV is signing in now.',
+    proxyDenied: 'This account is not allowed to use the stream proxy. Add it to ALLOWED_USERS in the Worker settings.',
+  },
+  remote: { sendTo: 'Send to TV', noDevices: 'No other devices are signed in to this account.', sent: 'Sent to {{d}}', searchOnTv: 'Search on TV' },
+  backup: {
+    title: 'Backup', hint: 'Export everything (playlists with logins, profiles, favorites, progress, settings) to an encrypted file, or restore one.',
+    export: 'Export backup', import: 'Import backup', passphrase: 'Passphrase (min. 6 characters)', passTooShort: 'Use at least 6 characters.',
+    exported: 'Backup downloaded.', imported: 'Restored {{n}} playlists. Updating catalogs…', wrongPass: 'Wrong passphrase.',
+  },
   live: {
     favorites: 'Favorites', newGroup: 'New group', groupName: 'Group name', deleteGroup: 'Delete group', emptyGroup: 'No channels here yet. Add channels from the player.',
     channels: 'Channels', guide: 'Guide', multiview: 'Multi-view', epgUpdating: 'Updating guide…', noEpg: 'No programme information',

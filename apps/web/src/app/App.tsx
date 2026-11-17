@@ -17,8 +17,24 @@ import { LivePage } from '../features/live/LivePage';
 import { LivePlayerScreen } from '../features/live/LivePlayerScreen';
 import { MultiView } from '../features/live/MultiView';
 import { ReminderWatcher } from '../components/Reminders';
+import { AccountPage, LinkPage } from '../features/account/AccountPage';
+import { setCommandHandler } from '../cloud/auth';
+import { useNavigate } from 'react-router-dom';
 import { Spinner } from '../components/ui';
 import { PlayerScreen } from '../player/ui/PlayerScreen';
+
+/** Runs commands sent from another device (Send to TV, search from the phone). */
+function RemoteCommands() {
+  const nav = useNavigate();
+  useEffect(() => {
+    setCommandHandler((c) => {
+      if (c.type === 'play') nav(c.path);
+      else if (c.type === 'search') nav(`/search?q=${encodeURIComponent(c.q)}`);
+      else if (c.type === 'key') window.dispatchEvent(new KeyboardEvent('keydown', { key: c.key, bubbles: true }));
+    });
+  }, [nav]);
+  return null;
+}
 
 /** Picks the active profile: the only unlocked one automatically, otherwise the picker. */
 function ProfileGate({ children }: { children: React.ReactNode }) {
@@ -57,6 +73,7 @@ export function App() {
       <BrowserRouter>
         <ProfileGate>
           <ReminderWatcher />
+          <RemoteCommands />
           <Routes>
             <Route path="/profiles" element={<ProfilesPage />} />
             <Route path="/play/:kind/:playlistId/:id" element={<PlayerScreen />} />
@@ -77,6 +94,8 @@ export function App() {
                     <Route path="/sources" element={<SourcesPage />} />
                     <Route path="/sources/add" element={<AddSourcePage />} />
                     <Route path="/settings" element={<SettingsPage />} />
+                    <Route path="/account" element={<AccountPage />} />
+                    <Route path="/link" element={<LinkPage />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </Shell>

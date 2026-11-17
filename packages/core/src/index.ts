@@ -7,3 +7,4 @@ export * from './xtream';
 export * from './duplicates';
 export * from './subtitles';
 export * from './xmltv';
+export * from './sync';
