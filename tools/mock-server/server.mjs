@@ -1,7 +1,15 @@
 // Mock Xtream Codes + M3U + TMDB server for local development and e2e tests.
 // Usage: node tools/mock-server/server.mjs [--port 4010] [--movies 30000] [--series 8000] [--live 12000]
 import http from 'node:http';
-import { URL } from 'node:url';
+import { URL, fileURLToPath } from 'node:url';
+import { createReadStream, readdirSync, statSync, readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { makeMedia } from './make-media.mjs';
+
+const MEDIA = join(dirname(fileURLToPath(import.meta.url)), 'media');
+makeMedia(MEDIA);
+const LIVE_SEGS = readdirSync(join(MEDIA, 'live')).filter((f) => f.endsWith('.ts')).sort();
+const SEG_DUR = 2;
 
 const arg = (name, def) => {
   const i = process.argv.indexOf(`--${name}`);
@@ -65,7 +73,7 @@ for (let i = 0; i < N_MOVIES; i++) {
 // a few stable, searchable titles for tests
 Object.assign(movies[0], { name: 'HQ | The Matrix (1999)', tmdb: '603', added: String(NOW) });
 Object.assign(movies[1], { name: 'AR - الفيل الأزرق (2014)', tmdb: '', added: String(NOW - 10) });
-Object.assign(movies[2], { name: '|EN| Interstellar 2014 FHD', tmdb: '157336', added: String(NOW - 20) });
+Object.assign(movies[2], { name: '|EN| Interstellar 2014 FHD', tmdb: '157336', added: String(NOW - 20), container_extension: 'm3u8' });
 
 const series = [];
 for (let i = 0; i < N_SERIES; i++) {
@@ -186,6 +194,35 @@ const json = (res, data, status = 200) => {
   res.end(JSON.stringify(data));
 };
 
+function sendFile(req, res, file, type) {
+  const size = statSync(file).size;
+  const range = /bytes=(\d*)-(\d*)/.exec(req.headers.range ?? '');
+  if (range) {
+    const start = range[1] ? Number(range[1]) : 0;
+    const end = range[2] ? Math.min(Number(range[2]), size - 1) : size - 1;
+    res.writeHead(206, { 'content-type': type, 'content-length': end - start + 1, 'content-range': `bytes ${start}-${end}/${size}`, 'accept-ranges': 'bytes' });
+    return createReadStream(file, { start, end }).pipe(res);
+  }
+  res.writeHead(200, { 'content-type': type, 'content-length': size, 'accept-ranges': 'bytes' });
+  createReadStream(file).pipe(res);
+}
+
+/** Sliding-window live playlist over looping 2 s segments. */
+function livePlaylist() {
+  const seq = Math.floor(Date.now() / 1000 / SEG_DUR);
+  const lines = ['#EXTM3U', '#EXT-X-VERSION:3', `#EXT-X-TARGETDURATION:${SEG_DUR}`, `#EXT-X-MEDIA-SEQUENCE:${seq}`];
+  let disc = 0;
+  for (let i = 0; i < 6; i++) {
+    const idx = (seq + i) % LIVE_SEGS.length;
+    if (idx === 0) disc++;
+    if (idx === 0 && i > 0) lines.push('#EXT-X-DISCONTINUITY');
+    lines.push(`#EXTINF:${SEG_DUR}.000,`, `${BASE}/media/live/${LIVE_SEGS[idx]}`);
+  }
+  lines.splice(4, 0, `#EXT-X-DISCONTINUITY-SEQUENCE:${Math.floor(seq / LIVE_SEGS.length)}`);
+  return lines.join('\n') + '\n';
+}
+
+let failNext = 0;
 let delayMs = 0;
 const server = http.createServer(async (req, res) => {
   res.setHeader('access-control-allow-origin', '*');
@@ -195,6 +232,16 @@ const server = http.createServer(async (req, res) => {
   const q = u.searchParams;
   if (delayMs) await new Promise((r) => setTimeout(r, delayMs));
 
+  if (u.pathname === '/__fail') {
+    failNext = Number(q.get('n') || 0);
+    return json(res, { failNext });
+  }
+  const isMedia = /^\/(media|movie|series|live)\//.test(u.pathname) && !u.pathname.endsWith('.m3u8');
+  if (isMedia && failNext > 0) {
+    failNext--;
+    res.writeHead(503);
+    return res.end('injected failure');
+  }
   if (u.pathname === '/__delay') {
     delayMs = Number(q.get('ms') || 0);
     return json(res, { delayMs });
@@ -224,6 +271,47 @@ const server = http.createServer(async (req, res) => {
     return res.end(m3u());
   }
   let m;
+  if ((m = /^\/media\/(hls|live)\/([\w.-]+)$/.exec(u.pathname))) {
+    const file = join(MEDIA, m[1], m[2]);
+    try {
+      statSync(file);
+    } catch {
+      res.writeHead(404);
+      return res.end();
+    }
+    const type = file.endsWith('.m3u8') ? 'application/vnd.apple.mpegurl' : file.endsWith('.vtt') ? 'text/vtt' : 'video/mp2t';
+    return sendFile(req, res, file, type);
+  }
+  if (/^\/movie\/test\/test\/10003\./.test(u.pathname)) {
+    res.writeHead(403);
+    return res.end('forbidden');
+  }
+  if ((m = /^\/movie\/test\/test\/(\d+)\.(\w+)$/.exec(u.pathname))) {
+    if (m[2] === 'm3u8') {
+      const master = readFileSync(join(MEDIA, 'hls', 'master.m3u8'), 'utf8').replace(/^(?!#)(\S+)$/gm, `${BASE}/media/hls/$1`).replace(/URI="([^"]+)"/g, `URI="${BASE}/media/hls/$1"`);
+      res.writeHead(200, { 'content-type': 'application/vnd.apple.mpegurl' });
+      return res.end(master);
+    }
+    return sendFile(req, res, join(MEDIA, 'vod.mp4'), 'video/mp4');
+  }
+  if ((m = /^\/series\/test\/test\/(\d+)\.(\w+)$/.exec(u.pathname))) return sendFile(req, res, join(MEDIA, 'episode.mp4'), 'video/mp4');
+  if ((m = /^\/live\/test\/test\/(\d+)\.m3u8$/.exec(u.pathname))) {
+    res.writeHead(200, { 'content-type': 'application/vnd.apple.mpegurl', 'cache-control': 'no-store' });
+    return res.end(livePlaylist());
+  }
+  if ((m = /^\/live\/test\/test\/(\d+)\.ts$/.exec(u.pathname))) {
+    // Endless MPEG-TS stream paced in real time
+    res.writeHead(200, { 'content-type': 'video/mp2t', 'cache-control': 'no-store' });
+    let i = 0;
+    let closed = false;
+    req.on('close', () => (closed = true));
+    const push = () => {
+      if (closed) return;
+      res.write(readFileSync(join(MEDIA, 'live', LIVE_SEGS[i++ % LIVE_SEGS.length])));
+      setTimeout(push, i < 3 ? 0 : SEG_DUR * 1000);
+    };
+    return push();
+  }
   if ((m = /^\/img\/([msl])\/(\d+)\.svg$/.exec(u.pathname))) {
     res.writeHead(200, { 'content-type': 'image/svg+xml', 'cache-control': 'max-age=86400' });
     return res.end(poster(m[1], m[2]));
@@ -234,6 +322,20 @@ const server = http.createServer(async (req, res) => {
   }
   if ((m = /^\/tmdb\/3\/search\/(movie|tv)$/.exec(u.pathname))) return json(res, tmdbSearch(q, m[1]));
   if ((m = /^\/tmdb\/3\/(movie|tv)\/(\d+)$/.exec(u.pathname))) return json(res, tmdbDetail(m[1], m[2], q.get('language')));
+  if (u.pathname === '/os/subtitles') {
+    return json(res, { data: [
+      { id: '1', attributes: { language: 'ar', release: `${q.get('query')} WEB-DL`, download_count: 900, files: [{ file_id: 101, file_name: 'ar.srt' }] } },
+      { id: '2', attributes: { language: 'en', release: `${q.get('query')} BluRay`, download_count: 500, files: [{ file_id: 102, file_name: 'en.srt' }] } },
+    ] });
+  }
+  if (u.pathname === '/os/download' && req.method === 'POST') {
+    const body = await new Promise((r) => { let b = ''; req.on('data', (c) => (b += c)); req.on('end', () => r(b)); });
+    const ar = JSON.parse(body || '{}').file_id === 101;
+    const lines = [];
+    for (let i = 0; i < 20; i++) lines.push(String(i + 1), `00:00:${String(i * 2).padStart(2, '0')},000 --> 00:00:${String(i * 2 + 1).padStart(2, '0')},500`, ar ? `سطر ترجمة ${i + 1}` : `Online line ${i + 1}`, '');
+    res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' });
+    return res.end(lines.join('\n'));
+  }
   if (u.pathname === '/health') return json(res, { ok: true, movies: movies.length, series: series.length, live: live.length });
   res.writeHead(404);
   res.end('not found');

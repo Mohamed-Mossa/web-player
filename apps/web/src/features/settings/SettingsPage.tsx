@@ -33,6 +33,29 @@ export function SettingsPage() {
           <Chip active={s.layoutOverride === 'mobile'} onClick={() => s.setLayoutOverride('mobile')}>{t('settings.layoutMobile')}</Chip>
         </Group>
 
+        <div className="space-y-4 rounded-2xl border border-line bg-surface p-5">
+          <p className="text-xs font-semibold tracking-wide text-muted uppercase">{t('settings.playback')}</p>
+          <Group title={t('settings.buffer')}>
+            {[10, 30, 60, 120].map((b) => (
+              <Chip key={b} testId={`buffer-${b}`} active={s.bufferSec === b} onClick={() => s.set({ bufferSec: b })}>{t('settings.bufferValue', { s: b })}</Chip>
+            ))}
+          </Group>
+          <Group title={t('settings.autoplayNext')}>
+            <Chip active={s.autoplayNext} onClick={() => s.set({ autoplayNext: true })}>{t('common.yes')}</Chip>
+            <Chip active={!s.autoplayNext} onClick={() => s.set({ autoplayNext: false })}>{t('common.no')}</Chip>
+          </Group>
+          <Group title={t('settings.prefAudio')}>
+            <Chip active={s.prefAudio === 'auto'} onClick={() => s.set({ prefAudio: 'auto' })}>{t('settings.original')}</Chip>
+            <Chip active={s.prefAudio === 'ar'} onClick={() => s.set({ prefAudio: 'ar' })}>{t('settings.arabic')}</Chip>
+            <Chip active={s.prefAudio === 'en'} onClick={() => s.set({ prefAudio: 'en' })}>{t('settings.english')}</Chip>
+          </Group>
+          <Group title={t('settings.prefSubs')}>
+            <Chip active={s.prefSubs === 'off'} onClick={() => s.set({ prefSubs: 'off' })}>{t('player.off')}</Chip>
+            <Chip active={s.prefSubs === 'ar'} onClick={() => s.set({ prefSubs: 'ar' })}>{t('settings.arabic')}</Chip>
+            <Chip active={s.prefSubs === 'en'} onClick={() => s.set({ prefSubs: 'en' })}>{t('settings.english')}</Chip>
+          </Group>
+        </div>
+
         <Group title={t('settings.refresh')}>
           {[6, 12, 24, 48].map((h) => (
             <Chip key={h} active={s.refreshHours === h} onClick={() => s.setRefreshHours(h)}>{t('settings.hours', { count: h })}</Chip>

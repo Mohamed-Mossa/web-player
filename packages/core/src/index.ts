@@ -5,3 +5,4 @@ export * from './hash';
 export * from './m3u';
 export * from './xtream';
 export * from './duplicates';
+export * from './subtitles';

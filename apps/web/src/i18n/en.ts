@@ -34,6 +34,7 @@ export const en = {
     noResults: 'No titles match these filters', items: '{{count}} titles', channels: '{{count}} channels', filters: 'Filters', clear: 'Clear',
   },
   details: {
+    continue: 'Continue', markWatched: 'Mark as watched', markUnwatched: 'Mark as unwatched',
     play: 'Play', trailer: 'Trailer', favorite: 'Favorite', unfavorite: 'Remove favorite', cast: 'Cast',
     similar: 'Similar titles', inLibrary: 'In your playlists', seasons: 'Seasons', episodes: 'Episodes', season: 'Season {{n}}',
     alsoIn: 'Also available in', director: 'Director', notFound: 'This title is no longer in the playlist.',
@@ -43,11 +44,33 @@ export const en = {
     who: "Who's watching?", add: 'Add profile', edit: 'Edit profile', name: 'Profile name', pin: 'PIN (optional, 4 digits)',
     enterPin: 'Enter PIN for {{name}}', wrongPin: 'Wrong PIN', removePin: 'Remove PIN', setPin: 'Set PIN', manage: 'Manage profiles', me: 'Me',
   },
+  player: {
+    play: 'Play', pause: 'Pause', back10: 'Back 10 seconds', fwd10: 'Forward 10 seconds', next: 'Next episode',
+    tracks: 'Audio & subtitles', audio: 'Audio', subtitles: 'Subtitles', quality: 'Quality', off: 'Off', speed: 'Speed',
+    normal: 'Normal', sleep: 'Sleep timer', sleepEnd: 'End of this video', sleepIn: 'Stops in {{m}} min', pip: 'Picture in picture',
+    cast: 'Cast', airplay: 'AirPlay', fullscreen: 'Full screen', loadFile: 'Load subtitle file (SRT/VTT)', searchOnline: 'Search OpenSubtitles',
+    searching: 'Searching…', noSubs: 'No subtitles found', size: 'Size', color: 'Color', background: 'Background', offset: 'Timing',
+    offsetValue: '{{v}} s', bgNone: 'None', bgShadow: 'Shadow', bgBox: 'Box', external: 'File: {{name}}',
+    resumeTitle: 'Continue watching?', resumeFrom: 'Resume from {{t}}', startOver: 'Start over',
+    upNext: 'Up next', playingIn: 'Playing in {{s}}', playNow: 'Play now', cancel: 'Cancel',
+    reconnecting: 'Reconnecting… ({{a}}/{{m}})', castingTo: 'Playing on {{d}}', stopCast: 'Stop casting', live: 'LIVE',
+    sleepDone: 'Sleep timer: playback paused', stillWatching: 'Still watching?',
+    errors: {
+      network: 'The stream stopped and could not reconnect. Check your connection or try again.',
+      unsupported: 'This browser cannot play this video format (often MKV, AC3/DTS audio or HEVC). Open it in the Android app, which supports these formats.',
+      forbidden: 'The server refused this stream. Your subscription may have expired.',
+      notFound: 'This stream is no longer available on the server.',
+      maxConnections: 'Too many devices are watching on this account right now. Stop playback on another device and try again.',
+      unknown: 'Something went wrong while playing.',
+    },
+  },
   settings: {
     title: 'Settings', language: 'Language', layout: 'Layout', layoutAuto: 'Automatic', layoutTv: 'TV', layoutDesktop: 'Desktop',
     layoutMobile: 'Mobile', proxy: 'Proxy URL (web version)', proxyHint: 'Your Cloudflare Worker address. Leave empty on Android.',
     refresh: 'Update catalog every', hours: '{{count}} hours', playlists: 'Playlists', profiles: 'Profiles', about: 'About',
     version: 'Version', build: 'Build', updateReady: 'A new version is ready', reload: 'Reload',
+    playback: 'Playback', buffer: 'Buffer size', bufferValue: '{{s}} s', autoplayNext: 'Autoplay next episode',
+    prefAudio: 'Preferred audio', prefSubs: 'Preferred subtitles', original: 'Original', arabic: 'Arabic', english: 'English',
   },
 };
 

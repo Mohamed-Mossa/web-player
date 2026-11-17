@@ -15,6 +15,7 @@ import { SettingsPage } from '../features/settings/SettingsPage';
 import { ProfilesPage, ensureDefaultProfile, useProfiles } from '../features/profiles/ProfilesPage';
 import { LiveChannelPage } from '../features/live/LiveChannelPage';
 import { Spinner } from '../components/ui';
+import { PlayerScreen } from '../player/ui/PlayerScreen';
 
 /** Picks the active profile: the only unlocked one automatically, otherwise the picker. */
 function ProfileGate({ children }: { children: React.ReactNode }) {
@@ -54,6 +55,7 @@ export function App() {
         <ProfileGate>
           <Routes>
             <Route path="/profiles" element={<ProfilesPage />} />
+            <Route path="/play/:kind/:playlistId/:id" element={<PlayerScreen />} />
             <Route
               path="*"
               element={

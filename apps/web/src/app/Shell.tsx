@@ -10,6 +10,7 @@ import { getCurrentFocusKey } from '@noriginmedia/norigin-spatial-navigation';
 import { useApp } from '../state/app';
 import { Avatar, useProfiles } from '../features/profiles/ProfilesPage';
 import { Button } from '../components/ui';
+import { ScreenSaver } from '../components/ScreenSaver';
 
 const ITEMS = [
   { to: '/', icon: Home, label: 'nav.home', match: (p: string) => p === '/' },
@@ -116,6 +117,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </FocusSection>
       <main className="relative min-w-0 flex-1">
         {children}
+        {tv && <ScreenSaver />}
         {pwa.needRefresh && (
           <div className="absolute bottom-4 end-4 z-40 flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3 shadow-2xl">
             <span className="text-sm">{t('settings.updateReady')}</span>

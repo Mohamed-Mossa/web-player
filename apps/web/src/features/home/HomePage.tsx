@@ -85,7 +85,7 @@ export function HomePage() {
         )}
         <FocusSection focusKey="home-rows" className="space-y-10">
         {!!progress?.length && (
-          <Row title={t('home.continue')} items={progress.map((p) => ({ key: `${p.playlistId}:${p.itemId}`, title: p.title, poster: p.poster, open: () => open({ kind: p.kind === 'episode' ? 'series' : 'movie', playlistId: p.playlistId, id: p.seriesId ?? p.itemId }) }))} />
+          <Row title={t('home.continue')} items={progress.map((p) => ({ key: `${p.playlistId}:${p.itemId}`, title: p.title, poster: p.poster, open: () => nav(p.kind === 'episode' ? `/play/episode/${p.playlistId}/${encodeURIComponent(p.itemId)}?s=${encodeURIComponent(p.seriesId ?? '')}` : `/play/movie/${p.playlistId}/${encodeURIComponent(p.itemId)}`) }))} testId="row-continue" />
         )}
         {!!favorites?.length && (
           <Row testId="row-favorites" title={t('home.favorites')} items={favorites.map((f) => ({ key: `${f.kind}:${f.playlistId}:${f.itemId}`, title: f.title, poster: f.poster, open: () => (f.kind === 'live' ? nav(`/live/${f.playlistId}/${f.itemId}`) : open({ kind: f.kind, playlistId: f.playlistId, id: f.itemId })) }))} />

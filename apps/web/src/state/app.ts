@@ -6,6 +6,12 @@ export type Lang = 'en' | 'ar';
 export type LayoutMode = 'tv' | 'desktop' | 'mobile';
 export type SortKey = 'added' | 'name' | 'year' | 'rating';
 
+export interface SubtitleStyle {
+  size: 's' | 'm' | 'l' | 'xl';
+  color: string;
+  background: 'none' | 'shadow' | 'box';
+}
+
 export interface CatalogView {
   categoryId: string | null; // null = all
   sort: SortKey;
@@ -23,6 +29,12 @@ interface AppState {
   refreshHours: number;
   profileId: string | null;
   views: Record<Kind, CatalogView>;
+  bufferSec: number;
+  autoplayNext: boolean;
+  subtitle: SubtitleStyle;
+  prefAudio: 'auto' | 'ar' | 'en';
+  prefSubs: 'off' | 'ar' | 'en';
+  set: (patch: Partial<Pick<AppState, 'bufferSec' | 'autoplayNext' | 'subtitle' | 'prefAudio' | 'prefSubs'>>) => void;
   setLang: (l: Lang) => void;
   setLayoutOverride: (m: LayoutMode | null) => void;
   setProxyBase: (s: string) => void;
@@ -40,6 +52,12 @@ export const useApp = create<AppState>()(
       refreshHours: 12,
       profileId: null,
       views: { movie: defaultView, series: defaultView, live: { ...defaultView, sort: 'added' } },
+      bufferSec: 30,
+      autoplayNext: true,
+      subtitle: { size: 'm', color: '#ffffff', background: 'shadow' },
+      prefAudio: 'auto',
+      prefSubs: 'off',
+      set: (patch) => set(patch),
       setLang: (lang) => set({ lang }),
       setLayoutOverride: (layoutOverride) => set({ layoutOverride }),
       setProxyBase: (proxyBase) => set({ proxyBase: proxyBase.trim() }),

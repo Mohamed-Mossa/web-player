@@ -6,3 +6,4 @@ test-results
 playwright-report
 *.log
 apps/web/dev-dist
+tools/mock-server/media

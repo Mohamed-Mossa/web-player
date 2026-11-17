@@ -1,4 +1,4 @@
-import { Clock, Heart, Play, Star, Clapperboard } from 'lucide-react';
+import { Check, Clock, Heart, Play, Star, Clapperboard } from 'lucide-react';
 import clsx from 'clsx';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +8,9 @@ import { useCatalog, usePlaylists, type GridItem } from '../../data/catalog';
 import { toggleFavorite, useIsFavorite, useItem, useSeriesDetail } from '../../data/items';
 import { tmdbImg, useTmdb } from '../../data/tmdb';
 import { useApp } from '../../state/app';
+import { setWatched, useItemProgress, useSeriesProgress } from '../../data/progress';
+import { flattenEpisodes } from '../../player/resolve';
+import { fmtTime } from '../../player/usePlayer';
 import { Focusable, FocusSection } from '../../nav/focus';
 import { Button, Chip, Empty, Img, PosterFallback, SectionTitle, Spinner } from '../../components/ui';
 import { PosterCard } from '../../components/cards';
@@ -22,7 +25,9 @@ export function DetailsPage({ kind }: { kind: 'movie' | 'series' }) {
   const fav = useIsFavorite(profileId, kind, playlistId, id);
   const playlists = usePlaylists();
   const { data: catalog } = useCatalog(kind);
-  const [notice, setNotice] = useState('');
+  const movieProgress = useItemProgress(profileId, 'movie', playlistId, id);
+  const seriesDetail = useSeriesDetail(playlistId, kind === 'series' ? id : '__none__').data;
+  const seriesProgress = useSeriesProgress(profileId, playlistId, kind === 'series' ? id : '__none__');
 
   const tm = useTmdb(
     item ? { type: kind === 'movie' ? 'movie' : 'tv', title: item.title, year: item.year, tmdbId: item.tmdbId, lang: i18n.language, full: true } : null,
@@ -47,6 +52,28 @@ export function DetailsPage({ kind }: { kind: 'movie' | 'series' }) {
 
   const similar = (tm?.similar ?? []).map((s) => ({ ...s, local: local.get(matchKey(s.title, undefined)) }));
   similar.sort((a, b) => Number(!!b.local) - Number(!!a.local));
+
+  // Series: continue where you left off, or the next unwatched episode
+  const eps = flattenEpisodes(seriesDetail);
+  let target = eps[0];
+  let continuing = false;
+  if (seriesProgress && seriesProgress.size) {
+    const last = [...seriesProgress.values()].sort((a, b) => b.lastWatchedAt - a.lastWatchedAt)[0];
+    const i = eps.findIndex((e) => e.id === last.itemId);
+    if (i >= 0) {
+      continuing = true;
+      target = last.completed ? eps[i + 1] ?? eps[i] : eps[i];
+    }
+  }
+  const resumeMovie = movieProgress && !movieProgress.completed && movieProgress.positionSec > 5 ? movieProgress.positionSec : 0;
+  const play = () => {
+    if (kind === 'movie') nav(`/play/movie/${playlistId}/${encodeURIComponent(id)}`);
+    else if (target) nav(`/play/episode/${playlistId}/${encodeURIComponent(target.id)}?s=${encodeURIComponent(id)}`);
+  };
+  const playLabel =
+    kind === 'movie'
+      ? resumeMovie ? `${t('details.play')} · ${fmtTime(resumeMovie)}` : t('details.play')
+      : target ? `${continuing ? t('details.continue') : t('details.play')} · S${target.season} E${target.episode}` : t('details.play');
 
   return (
     <div className="scroll-thin relative h-full overflow-y-auto">
@@ -83,8 +110,8 @@ export function DetailsPage({ kind }: { kind: 'movie' | 'series' }) {
               </div>
             )}
             <div className="mt-6 flex flex-wrap gap-2">
-              <Button variant="primary" focusKey="details-play" testId="play" icon={<Play className="size-4 fill-current" />} onClick={() => setNotice(t('common.comingPhase', { n: 2 }))}>
-                {t('details.play')}
+              <Button variant="primary" focusKey="details-play" testId="play" disabled={kind === 'series' && !target} icon={<Play className="size-4 fill-current" />} onClick={play}>
+                {playLabel}
               </Button>
               {tm?.trailerKey && (
                 <Button icon={<Clapperboard className="size-4" />} onClick={() => window.open(`https://www.youtube.com/watch?v=${tm.trailerKey}`, '_blank', 'noopener')}>
@@ -101,7 +128,6 @@ export function DetailsPage({ kind }: { kind: 'movie' | 'series' }) {
                 </Button>
               )}
             </div>
-            {notice && <p className="mt-3 text-sm text-warn" role="status">{notice}</p>}
             {overview && <p className="mt-6 max-w-3xl leading-relaxed text-text/85">{overview}</p>}
             {merged && merged.alternates.length > 0 && (
               <p className="mt-4 text-sm text-muted">
@@ -154,7 +180,10 @@ export function DetailsPage({ kind }: { kind: 'movie' | 'series' }) {
 
 function SeasonsBlock({ playlistId, seriesId }: { playlistId: string; seriesId: string }) {
   const { t } = useTranslation();
+  const nav = useNavigate();
+  const profileId = useApp((s) => s.profileId);
   const { data, isLoading, error, refetch } = useSeriesDetail(playlistId, seriesId);
+  const progress = useSeriesProgress(profileId, playlistId, seriesId);
   const [season, setSeason] = useState<number | null>(null);
   if (isLoading) return <div className="mt-10"><Spinner /></div>;
   if (error) return <div className="mt-10"><Button onClick={() => refetch()}>{t('common.retry')}</Button></div>;
@@ -171,15 +200,39 @@ function SeasonsBlock({ playlistId, seriesId }: { playlistId: string; seriesId: 
         ))}
       </FocusSection>
       <FocusSection className="grid gap-2 md:grid-cols-2">
-        {current.episodes.map((e) => (
-          <Focusable key={e.id} testId="episode" className="flex items-center gap-4 rounded-xl bg-surface p-3 text-start hover:bg-surface-2">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-sm font-semibold tabular-nums">{e.episode}</span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{e.title}</p>
-              {e.durationSec && <p className="text-xs text-muted">{t('common.minutes', { count: Math.round(e.durationSec / 60) })}</p>}
+        {current.episodes.map((e) => {
+          const p = progress?.get(e.id);
+          const pct = p && p.durationSec ? Math.min(100, (p.positionSec / p.durationSec) * 100) : 0;
+          return (
+            <div key={e.id} className="flex items-center gap-2">
+              <Focusable
+                testId="episode"
+                onSelect={() => nav(`/play/episode/${playlistId}/${encodeURIComponent(e.id)}?s=${encodeURIComponent(seriesId)}`)}
+                className="relative flex min-w-0 flex-1 items-center gap-4 overflow-hidden rounded-xl bg-surface p-3 text-start hover:bg-surface-2"
+              >
+                <span className={clsx('flex size-10 shrink-0 items-center justify-center rounded-lg text-sm font-semibold tabular-nums', p?.completed ? 'bg-good/20 text-good' : 'bg-surface-2')}>
+                  {p?.completed ? <Check className="size-5" /> : e.episode}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{e.title}</p>
+                  {e.durationSec && <p className="text-xs text-muted">{t('common.minutes', { count: Math.round(e.durationSec / 60) })}</p>}
+                </div>
+                {!p?.completed && pct > 0 && <span className="absolute inset-x-0 bottom-0 h-1 bg-accent" style={{ width: `${pct}%` }} />}
+              </Focusable>
+              {profileId && (
+                <Focusable
+                  testId="toggle-watched"
+                  title={p?.completed ? t('details.markUnwatched') : t('details.markWatched')}
+                  ariaLabel={p?.completed ? t('details.markUnwatched') : t('details.markWatched')}
+                  onSelect={() => setWatched({ profileId, kind: 'episode', playlistId, itemId: e.id, seriesId, season: e.season, episode: e.episode, title: e.title }, !p?.completed)}
+                  className={clsx('rounded-lg p-2.5', p?.completed ? 'text-good' : 'text-muted hover:text-text')}
+                >
+                  <Check className="size-4" />
+                </Focusable>
+              )}
             </div>
-          </Focusable>
-        ))}
+          );
+        })}
       </FocusSection>
     </section>
   );
