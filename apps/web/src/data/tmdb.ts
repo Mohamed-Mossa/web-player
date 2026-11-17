@@ -3,6 +3,7 @@ import { matchKey } from '@iptv/core';
 import { db, type TmdbInfo } from '../db/db';
 import { API_BASE, TMDB_IMG } from '../env';
 import { fetchJson } from '../lib/http';
+import { useAuth } from '../state/auth';
 
 const TTL = 30 * 86400_000;
 
@@ -21,8 +22,11 @@ async function limited<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 type Raw = Record<string, any>;
-const tmdb = (path: string, params: Record<string, string>) =>
-  limited(() => fetchJson(`${API_BASE}/tmdb/3${path}?${new URLSearchParams(params)}`, {}, 15_000)) as Promise<Raw>;
+const tmdb = (path: string, params: Record<string, string>) => {
+  const t = useAuth.getState().proxyToken;
+  const q = new URLSearchParams(t ? { ...params, t } : params);
+  return limited(() => fetchJson(`${API_BASE}/tmdb/3${path}?${q}`, {}, 15_000)) as Promise<Raw>;
+};
 
 export const tmdbImg = (path: string | undefined, size: 'w185' | 'w342' | 'w780' | 'w1280' | 'h632' = 'w342') =>
   path ? `${TMDB_IMG}/${size}${path}` : undefined;

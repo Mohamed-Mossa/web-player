@@ -1,0 +1,19 @@
+name = "iptv-proxy"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+# Xtream panels often listen on ports like 8080 or 25461; without this flag Workers silently use 80/443.
+compatibility_flags = ["allow_custom_ports"]
+
+[vars]
+# Comma-separated origins allowed to call the proxy (your Pages domain and localhost for development).
+ALLOWED_ORIGINS = "http://localhost:5173,https://web-player.pages.dev"
+
+# Secrets (set with `wrangler secret put NAME`):
+#   TOKEN_SECRET            random string, signs short-lived proxy tokens
+#   SUPABASE_URL            https://xxxx.supabase.co
+#   SUPABASE_ANON_KEY       public anon key of the project
+#   ALLOWED_USERS           comma-separated Supabase user ids or emails allowed to use the proxy
+#   TMDB_API_KEY            TMDB v3 API key or v4 read access token
+#   OPENSUBTITLES_API_KEY   OpenSubtitles.com API key
+#   OPENSUBTITLES_USERNAME  optional, raises the daily download limit
+#   OPENSUBTITLES_PASSWORD  optional

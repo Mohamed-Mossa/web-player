@@ -12,3 +12,6 @@ export const API_BASE: string = (import.meta.env.VITE_API_BASE as string | undef
 /** TMDB image CDN. The mock server serves its own images in development. */
 export const TMDB_IMG: string =
   (import.meta.env.VITE_TMDB_IMG as string | undefined)?.replace(/\/$/, '') ?? 'https://image.tmdb.org/t/p';
+
+/** Proxy for provider requests on the web build (normally the same Worker). Empty = direct. */
+export const PROXY_BASE: string = (import.meta.env.VITE_PROXY_BASE as string | undefined)?.replace(/\/$/, '') ?? '';

@@ -5,6 +5,9 @@ import { loadSecret } from '../lib/crypto';
 import { fetchJson, type NetConfig } from '../lib/http';
 import { queryClient } from '../lib/query';
 import { useApp } from '../state/app';
+import { PROXY_BASE } from '../env';
+import { isNative } from '../lib/platform';
+import { useAuth } from '../state/auth';
 import type { SyncMessage, SyncRequest } from '../workers/catalogSync.worker';
 
 export interface SyncState {
@@ -16,7 +19,12 @@ export interface SyncState {
 export const useSync = create<{ byId: Record<string, SyncState> }>()(() => ({ byId: {} }));
 const setState = (id: string, s: SyncState) => useSync.setState((st) => ({ byId: { ...st.byId, [id]: s } }));
 
-export const netConfig = (): NetConfig => ({ proxyBase: useApp.getState().proxyBase || undefined });
+/** Provider requests: Android uses native HTTP (no proxy); the web build goes through the Worker. */
+export const netConfig = (): NetConfig => {
+  if (isNative()) return {};
+  const base = useApp.getState().proxyBase || PROXY_BASE;
+  return base ? { proxyBase: base, proxyToken: useAuth.getState().proxyToken ?? undefined } : {};
+};
 
 let worker: Worker | null = null;
 const waiters = new Map<string, { resolve: () => void; reject: (e: Error) => void }>();
