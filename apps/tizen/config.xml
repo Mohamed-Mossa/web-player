@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Samsung TV (Tizen) package. __VERSION__ is filled in by apps/web/scripts/package-tizen.mjs. -->
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets"
+        id="http://mousa.iptv/player" version="__VERSION__" viewmodes="maximized">
+  <tizen:application id="IptvMousa1.IPTVPlayer" package="IptvMousa1" required_version="5.5"/>
+  <tizen:profile name="tv-samsung"/>
+  <name>IPTV Player</name>
+  <icon src="icon.png"/>
+  <content src="index.html"/>
+  <feature name="http://tizen.org/feature/screen.size.normal.1080.1920"/>
+
+  <!-- Talk to IPTV providers, TMDB and the account backend directly (no CORS, http allowed). -->
+  <access origin="*" subdomains="true"/>
+  <tizen:allow-navigation>*</tizen:allow-navigation>
+  <tizen:privilege name="http://tizen.org/privilege/internet"/>
+  <!-- Remote buttons beyond the arrows (CH +/-, PLAY/PAUSE, numbers, colour keys…) -->
+  <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
+
+  <tizen:setting screen-orientation="landscape" context-menu="disable" background-support="disable"
+                 encryption="disable" install-location="auto" hwkey-event="enable"/>
+  <tizen:metadata key="http://samsung.com/tv/metadata/prelaunch.support" value="false"/>
+</widget>

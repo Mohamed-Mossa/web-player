@@ -1,4 +1,6 @@
 /// <reference lib="webworker" />
+import 'virtual-worker-polyfills';
+import { gunzipStream, textDecoderStream } from '../lib/streams';
 import { XmltvParser } from '@iptv/core';
 import { db, type EpgRow } from '../db/db';
 import { fetchWithTimeout, type NetConfig } from '../lib/http';
@@ -24,8 +26,8 @@ async function textStream(res: Response): Promise<ReadableStream<string>> {
     },
   });
   const gz = head[0] === 0x1f && head[1] === 0x8b;
-  const bytes = gz ? rest.pipeThrough(new DecompressionStream('gzip') as unknown as TransformStream<Uint8Array, Uint8Array>) : rest;
-  return bytes.pipeThrough(new TextDecoderStream() as unknown as TransformStream<Uint8Array, string>);
+  const bytes = gz ? rest.pipeThrough(gunzipStream()) : rest;
+  return bytes.pipeThrough(textDecoderStream());
 }
 
 self.onmessage = async (ev: MessageEvent<EpgRequest>) => {

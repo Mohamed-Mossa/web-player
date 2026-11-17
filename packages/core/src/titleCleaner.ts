@@ -33,7 +33,9 @@ const QUALITY_RE = new RegExp(`(^|[\\s\\[\\(|\\-–:])(${QUALITY_WORDS})(?=$|[\\
 const QUALITY_TEST = new RegExp(`^(?:${QUALITY_WORDS})$`);
 const ARABIC_TAGS = /(^|\s)(مدبلج|مترجم|اونلاين|أونلاين|حصري|جديد|كامل|بجودة عالية)(?=\s|$)/g;
 
-const DECORATION = /[\p{Extended_Pictographic}─-╿■-◿☀-➿⬀-⯿•»«★☆✪◉️]/gu;
+// Emoji and box/symbol decorations. Written as ranges, not \p{Extended_Pictographic}, which
+// older TV browsers (Chromium 69) reject as a syntax error.
+const DECORATION = /[\u{1F000}-\u{1FAFF}\u{2300}-\u{23FF}\u{2190}-\u{21FF}\u{3030}\u{303D}\u{3297}\u{3299}\u{00A9}\u{00AE}\u{203C}\u{2049}\u{2122}\u{2139}\u{24C2}─-╿■-◿☀-➿⬀-⯿•»«★☆✪◉\u{FE0F}\u{200D}]/gu;
 const SEPARATORS = '[\\s\\-|:–—·._/]';
 const TRIM_SEP = new RegExp(`^${SEPARATORS}+|${SEPARATORS}+$`, 'g');
 

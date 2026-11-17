@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useApp, type LayoutMode } from '../state/app';
+import { IS_TIZEN } from '../env';
 
 let nativeTv = false;
 export const setNativeTv = (v: boolean) => {
@@ -12,7 +13,7 @@ export function detectLayout(): LayoutMode {
   const params = new URLSearchParams(location.search);
   const forced = params.get('layout');
   if (forced === 'tv' || forced === 'desktop' || forced === 'mobile') return forced;
-  if (nativeTv || TV_UA.test(navigator.userAgent)) return 'tv';
+  if (nativeTv || isTizen() || TV_UA.test(navigator.userAgent)) return 'tv';
   const coarse = matchMedia('(pointer: coarse)').matches;
   if (coarse && Math.min(screen.width, screen.height) < 820) return 'mobile';
   if (innerWidth < 720) return 'mobile';
@@ -35,3 +36,9 @@ export function useLayout(): LayoutMode {
 }
 
 export const isNative = () => !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
+
+/** Samsung TV package (Tizen). */
+export const isTizen = () => IS_TIZEN || typeof (window as unknown as { tizen?: unknown }).tizen !== 'undefined';
+
+/** Apps that talk to providers directly (no CORS limits, http allowed): Android and the Samsung package. */
+export const directNet = () => isNative() || isTizen();

@@ -85,7 +85,7 @@ export function Shell({ children }: { children: ReactNode }) {
         className={clsx('flex shrink-0 flex-col gap-1 border-e border-line/60 bg-surface/60 py-5', tv ? 'w-20 items-center px-2' : 'w-56 px-3')}
       >
         <div className={clsx('mb-6 flex items-center gap-2 px-2', tv && 'justify-center')}>
-          <img src="/icon.svg" alt="" className="size-8" />
+          <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" className="size-8" />
           {!tv && <span className="text-lg font-bold tracking-tight">IPTV</span>}
         </div>
         {ITEMS.map((it) => {

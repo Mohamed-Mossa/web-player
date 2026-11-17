@@ -17,6 +17,7 @@ import { useApp } from '../../state/app';
 import { useEpgSync } from '../../sync/epgSync';
 import { Button, Chip, Empty, Img, Modal, Spinner } from '../../components/ui';
 import { NoPlaylists } from '../home/HomePage';
+import { scrollToStart } from '../../lib/rtlScroll';
 
 const hm = (t: number, lang: string) => new Date(t).toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-GB', { hour: '2-digit', minute: '2-digit' });
 
@@ -216,7 +217,7 @@ export function EpgGuide({ channels, onPlay }: { channels: LiveItem[]; onPlay: (
   const slots = Array.from({ length: 30 }, (_, i) => from + i * 1_800_000);
 
   useEffect(() => {
-    ref.current?.scrollTo({ left: Math.abs(x(now) - 240) * (document.dir === 'rtl' ? -1 : 1) });
+    if (ref.current) scrollToStart(ref.current, Math.abs(x(now) - 240));
   }, [from]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const select = (c: LiveItem, p: EpgRow) => {

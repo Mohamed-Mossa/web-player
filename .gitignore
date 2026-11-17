@@ -7,3 +7,6 @@ playwright-report
 *.log
 apps/web/dev-dist
 tools/mock-server/media
+dist-tizen*
+apps/web/tizen-app.zip
+*.wgt

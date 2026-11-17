@@ -25,6 +25,7 @@ export function PosterCard({
       className="group flex w-full flex-col rounded-xl text-start"
     >
       <div className="relative w-full overflow-hidden rounded-xl bg-surface-2" style={{ aspectRatio: '2 / 3', width }}>
+        <span className="aspect-fallback-2x3" aria-hidden />
         <Img
           src={item.poster}
           alt={item.title}

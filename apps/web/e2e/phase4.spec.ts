@@ -14,6 +14,10 @@ async function setup(page: Page) {
     };
   })), { timeout: 60_000 }).toBeGreaterThan(1000);
 }
+/** Back hides the channel banner, but leaves the player when the banner has already timed out. */
+async function hideBanner(page: Page) {
+  if ((await page.getByTestId('live-osd').getAttribute('data-visible')) === 'true') await remote(page, 'Escape');
+}
 const waitPlaying = (page: Page) => page.waitForFunction(() => (document.querySelector('video')?.currentTime ?? 0) > 0.5, null, { timeout: 40_000 });
 
 test.beforeEach(async ({ page }) => setup(page));
@@ -28,11 +32,11 @@ test('channel list shows now/next; zapping with up/down, numbers and last channe
   await expect(page.getByTestId('live-osd')).toHaveAttribute('data-visible', 'false', { timeout: 10_000 });
   await remote(page, 'ArrowDown');
   await expect(page.getByTestId('live-num')).toHaveText('2');
-  await remote(page, 'Escape'); // hide banner
+  await hideBanner(page);
   await page.keyboard.type('12');
   await expect(page.getByTestId('digits')).toHaveText('12');
   await expect(page.getByTestId('live-num')).toHaveText('12', { timeout: 5000 });
-  await remote(page, 'Escape');
+  await hideBanner(page);
   await page.keyboard.press('l'); // last channel
   await expect(page.getByTestId('live-num')).toHaveText('2');
 });

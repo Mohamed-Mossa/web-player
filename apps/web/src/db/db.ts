@@ -54,7 +54,8 @@ export interface SecretRow {
 
 export interface KeyRow {
   id: string;
-  key: CryptoKey;
+  /** Non-extractable CryptoKey; raw bytes only on browsers without WebCrypto. */
+  key: CryptoKey | Uint8Array;
 }
 
 export interface Profile {

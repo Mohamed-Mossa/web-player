@@ -1,4 +1,5 @@
 /// <reference lib="webworker" />
+import 'virtual-worker-polyfills';
 import MiniSearch from 'minisearch';
 import { expandTerm, normalizeText, type Kind } from '@iptv/core';
 import { db } from '../db/db';

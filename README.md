@@ -1,8 +1,9 @@
 # IPTV Player
 
-Cross-platform IPTV player for Android TV (remote/D-pad), desktop, phones and tablets.
-One React + TypeScript codebase ships as a PWA (desktop, iPhone/iPad, any browser) and as an Android app
-(phones, tablets, Android TV) that plays through Media3 ExoPlayer.
+Cross-platform IPTV player for Android TV and Samsung TVs (remote/D-pad), desktop, phones and tablets.
+One React + TypeScript codebase ships as a PWA (desktop, iPhone/iPad, any browser), as an Android app
+(phones, tablets, Android TV) that plays through Media3 ExoPlayer, and as a Samsung TV app (Tizen, 2020+)
+that plays through Samsung's AVPlay.
 
 | Phase | Scope | Status |
 | --- | --- | --- |
@@ -11,6 +12,7 @@ One React + TypeScript codebase ships as a PWA (desktop, iPhone/iPad, any browse
 | 3 | Android + Android TV app: ExoPlayer under a transparent WebView, FFmpeg audio, remote keys, voice search, frame-rate matching, OTA updates | Done (built by GitHub Actions) |
 | 4 | Live TV: XMLTV guide, now/next, zapping, catch-up, channel groups, reminders, multi-view | Done |
 | 5 | Supabase sync, TV sign-in by QR, Send to TV, encrypted backup, proxy Worker, Pages deploy | Done (needs your accounts, see Setup) |
+| + | Samsung TV app: Chromium 69 build (legacy JS, lowered CSS), AVPlay player, Samsung remote keys, install scripts | Done (built by GitHub Actions; install from your PC) |
 
 The architecture and data model are in the design doc ("IPTV Player — Architecture & Data Model").
 
@@ -22,15 +24,18 @@ apps/web/              React + Vite app (PWA + Capacitor web layer)
   src/features/        home, catalog, details, search, live (list, guide, live player, multi-view), sources, profiles, settings, account
   src/workers/         catalog sync, EPG import, search index
   src/cloud/           Supabase auth, sync engine (outbox + pull), backup, devices / remote commands
-  src/native/          Android bridge (back button, TV detection, voice search, OTA updates)
+  src/native/          Android bridge (back button, TV detection, voice search, OTA updates), Samsung remote keys
+  build/               Samsung build: Vite plugin, CSS lowering for Chromium 69 (+ tests)
   android/             Capacitor Android project; ExoPlayerPlugin.java, TvBridgePlugin.java, MainActivity.java
-  e2e/                 Playwright tests (27)
+  e2e/                 Playwright tests (28)
+apps/tizen/            Samsung TV package: config.xml, icon, install.ps1 / install.sh, setup guide
 packages/core/         Pure TypeScript: Xtream client, M3U + XMLTV streaming parsers, title cleaner, subtitles,
                        Arabic-aware search normalization, diffing, sync merge rules (71 tests)
 workers/proxy/         Cloudflare Worker: locked proxy (signed tokens), HLS rewrite, TMDB + OpenSubtitles relay (9 tests)
 supabase/              SQL migration with row-level security (6 tests on PGlite), edge functions (secrets, device-login)
 tools/mock-server/     Mock Xtream/M3U/XMLTV/TMDB/OpenSubtitles server with real test streams (needs ffmpeg)
-.github/workflows/     ci.yml (tests + e2e), android.yml (APK → "android-latest" release), worker.yml (deploy Worker)
+.github/workflows/     ci.yml (tests + e2e), android.yml (APK → "android-latest" release),
+                       tizen.yml (Samsung app → "tizen-latest" release), worker.yml (deploy Worker)
 ```
 
 ## Develop
@@ -49,9 +54,10 @@ Add an Xtream playlist with server `http://localhost:4010`, user `test`, passwor
 ### Tests
 
 ```bash
-pnpm test        # unit + integration: core (71), proxy (9), RLS on Postgres (6), sync engine (4)
+pnpm test        # unit + integration: core (71), proxy (9), RLS on Postgres (6), sync engine + Samsung CSS (11)
 pnpm typecheck
-pnpm e2e         # 27 Playwright tests; starts the mock server and the app itself
+pnpm e2e         # 28 Playwright tests; starts the mock server and the app itself
+                 # (the Samsung test needs `pnpm --filter @iptv/web build:tizen:mock` first)
 ```
 
 ## Setup and deploy
@@ -120,7 +126,7 @@ GitHub Actions builds the APK on every push and attaches it to the **android-lat
 `https://github.com/Mohamed-Mossa/web-player/releases/download/android-latest/iptv-player.apk`
 
 - Add the same `VITE_*` values as GitHub **repository variables** (Settings → Secrets and variables →
-  Actions → Variables) named `API_BASE`, `OTA_BASE`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SENTRY_DSN`.
+  Actions → Variables) named `API_BASE`, `OTA_BASE`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `APP_URL`, `SENTRY_DSN`.
 - Add the signing key as **secrets**: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
   `ANDROID_KEY_PASSWORD`, `ANDROID_KEY_ALIAS`. Without them the APK is debug-signed, and each build then
   needs an uninstall before installing.
@@ -129,11 +135,21 @@ GitHub Actions builds the APK on every push and attaches it to the **android-lat
   do not reinstall. Java/native changes need a new APK; bump `NATIVE_API` in `src/env.ts` and
   `TvBridgePlugin.java` when the web code starts needing them.
 
+### 5. Samsung TV (2020 and newer)
+
+GitHub Actions builds `tizen-app.zip` on every push and attaches it to the **tizen-latest** release. Samsung
+only installs apps signed for your TV, so signing and installing run on your computer with Tizen Studio:
+one-time setup (Developer Mode, Samsung certificate) and the install command are in
+[apps/tizen/README.md](apps/tizen/README.md). Also set the repository variable `APP_URL` (your Pages address)
+so the TV's "sign in with your phone" QR code points to the right site.
+
 ## Notes
 
 - **Codecs.** Browsers cannot play most MKV, AC3/DTS or HEVC streams; the web player says so and suggests the
-  Android app. ExoPlayer plays them, with FFmpeg audio decoders (Jellyfin's `media3-ffmpeg-decoder`, GPL-3.0).
-- **Proxy.** Only the web build uses the proxy. The Android app connects directly using native HTTP.
+  Android app. ExoPlayer plays them, with FFmpeg audio decoders (Jellyfin's `media3-ffmpeg-decoder`, GPL-3.0). Samsung's AVPlay
+  plays MKV/HEVC/AC3/E-AC3 in hardware; DTS audio is not supported on most Samsung models from 2018 on.
+- **Proxy.** Only the web build uses the proxy. The Android and Samsung apps connect directly (a proxy can
+  still be typed in Settings on the Samsung app if a provider needs one).
   Cloudflare's terms limit serving video through Workers on free plans; heavy web viewing may need Workers Paid.
 - **Chromecast.** Works from Chrome (desktop/Android browser). Inside the Android app the Cast button is
   hidden; use "Send to TV" between your own devices instead.

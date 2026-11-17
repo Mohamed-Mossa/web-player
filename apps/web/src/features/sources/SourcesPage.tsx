@@ -38,6 +38,8 @@ function fmtDate(ms: number | null | undefined, lang: string) {
 }
 function fmtAgo(ms: number | undefined, lang: string) {
   if (!ms) return null;
+  // Intl.RelativeTimeFormat arrived in Chromium 71 (Samsung 2020 TVs have 69)
+  if (typeof Intl.RelativeTimeFormat !== 'function') return new Date(ms).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-GB');
   const rtf = new Intl.RelativeTimeFormat(lang, { numeric: 'auto' });
   const mins = Math.round((ms - Date.now()) / 60000);
   if (Math.abs(mins) < 60) return rtf.format(mins, 'minute');

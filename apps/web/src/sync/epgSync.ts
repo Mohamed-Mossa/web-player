@@ -4,6 +4,7 @@ import { useApp } from '../state/app';
 import type { EpgMessage, EpgRequest } from '../workers/epg.worker';
 import { netConfig, useSync } from './catalogSync';
 import { create } from 'zustand';
+import { createEpgWorker } from 'virtual-worker-factory';
 
 /** `version` bumps after every import: writes happen in a worker, so screens re-query on this. */
 export const useEpgSync = create<{ running: Record<string, boolean>; version: number }>()(() => ({ running: {}, version: 0 }));
@@ -13,7 +14,7 @@ let worker: Worker | null = null;
 const waiters = new Map<string, () => void>();
 function getWorker() {
   if (worker) return worker;
-  worker = new Worker(new URL('../workers/epg.worker.ts', import.meta.url), { type: 'module' });
+  worker = createEpgWorker();
   worker.onmessage = async (ev: MessageEvent<EpgMessage>) => {
     const m = ev.data;
     if (m.type === 'done') await db.playlists.update(m.playlistId, { epgUpdatedAt: Date.now(), epgError: undefined, epgCount: m.count });

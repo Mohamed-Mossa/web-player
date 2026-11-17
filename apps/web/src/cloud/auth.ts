@@ -1,3 +1,4 @@
+import { APP_URL } from '../env';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { create } from 'zustand';
 import { useAuth } from '../state/auth';
@@ -108,12 +109,12 @@ export async function signIn(email: string, password: string) {
   if (error) throw error;
 }
 export async function signUp(email: string, password: string) {
-  const { data, error } = await supabase!.auth.signUp({ email, password, options: { emailRedirectTo: location.origin + '/account' } });
+  const { data, error } = await supabase!.auth.signUp({ email, password, options: { emailRedirectTo: (APP_URL || location.origin) + '/account' } });
   if (error) throw error;
   return !data.session; // true = confirmation email sent
 }
 export async function sendMagicLink(email: string) {
-  const { error } = await supabase!.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + '/account' } });
+  const { error } = await supabase!.auth.signInWithOtp({ email, options: { emailRedirectTo: (APP_URL || location.origin) + '/account' } });
   if (error) throw error;
 }
 export async function signOut() {

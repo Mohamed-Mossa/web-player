@@ -88,8 +88,9 @@ export function DetailsPage({ kind }: { kind: 'movie' | 'series' }) {
       <FocusSection autoFocus preferredChildFocusKey="details-play" className="relative z-10 mx-auto max-w-6xl px-4 pt-6 pb-16 md:px-10 md:pt-14">
         <div className="flex flex-col gap-6 md:flex-row md:gap-10">
           <div className="mx-auto w-40 shrink-0 md:mx-0 md:w-60">
-            <div className="overflow-hidden rounded-2xl shadow-2xl" style={{ aspectRatio: '2/3' }}>
-              <Img src={poster} alt={item.title} className="size-full object-cover" fallback={<PosterFallback title={item.title} className="size-full" />} />
+            <div className="relative overflow-hidden rounded-2xl shadow-2xl" style={{ aspectRatio: '2/3' }}>
+              <span className="aspect-fallback-2x3" aria-hidden />
+              <Img src={poster} alt={item.title} className="absolute inset-0 size-full object-cover" fallback={<PosterFallback title={item.title} className="absolute inset-0 size-full" />} />
             </div>
           </div>
           <div className="min-w-0 flex-1">

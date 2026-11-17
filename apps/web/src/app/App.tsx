@@ -1,11 +1,15 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter, HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { queryClient } from '../lib/query';
 import { useApp, useSession } from '../state/app';
 import { backgroundRefresh } from '../sync/catalogSync';
 import { Shell } from './Shell';
+import { IS_TIZEN } from '../env';
+
+/** The Samsung package is served from file://, so routes live in the hash there. */
+const Router = IS_TIZEN ? HashRouter : BrowserRouter;
 import { HomePage } from '../features/home/HomePage';
 import { CatalogPage } from '../features/catalog/CatalogPage';
 import { DetailsPage } from '../features/details/DetailsPage';
@@ -70,7 +74,7 @@ export function App() {
   }, []);
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <Router>
         <ProfileGate>
           <ReminderWatcher />
           <RemoteCommands />
@@ -103,7 +107,7 @@ export function App() {
             />
           </Routes>
         </ProfileGate>
-      </BrowserRouter>
+      </Router>
     </QueryClientProvider>
   );
 }

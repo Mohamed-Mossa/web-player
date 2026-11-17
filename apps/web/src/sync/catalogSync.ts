@@ -6,9 +6,10 @@ import { fetchJson, type NetConfig } from '../lib/http';
 import { queryClient } from '../lib/query';
 import { useApp } from '../state/app';
 import { PROXY_BASE } from '../env';
-import { isNative } from '../lib/platform';
+import { isNative, isTizen } from '../lib/platform';
 import { useAuth } from '../state/auth';
 import type { SyncMessage, SyncRequest } from '../workers/catalogSync.worker';
+import { createCatalogWorker } from 'virtual-worker-factory';
 
 export interface SyncState {
   running: boolean;
@@ -19,10 +20,13 @@ export interface SyncState {
 export const useSync = create<{ byId: Record<string, SyncState> }>()(() => ({ byId: {} }));
 const setState = (id: string, s: SyncState) => useSync.setState((st) => ({ byId: { ...st.byId, [id]: s } }));
 
-/** Provider requests: Android uses native HTTP (no proxy); the web build goes through the Worker. */
+/**
+ * Provider requests: Android uses native HTTP (no proxy); the web build goes through the Worker.
+ * The Samsung package calls providers directly unless a proxy was typed in Settings.
+ */
 export const netConfig = (): NetConfig => {
   if (isNative()) return {};
-  const base = useApp.getState().proxyBase || PROXY_BASE;
+  const base = isTizen() ? useApp.getState().proxyBase : useApp.getState().proxyBase || PROXY_BASE;
   return base ? { proxyBase: base, proxyToken: useAuth.getState().proxyToken ?? undefined } : {};
 };
 
@@ -31,7 +35,7 @@ const waiters = new Map<string, { resolve: () => void; reject: (e: Error) => voi
 
 function getWorker() {
   if (worker) return worker;
-  worker = new Worker(new URL('../workers/catalogSync.worker.ts', import.meta.url), { type: 'module' });
+  worker = createCatalogWorker();
   worker.onmessage = async (ev: MessageEvent<SyncMessage>) => {
     const m = ev.data;
     if (m.type === 'progress') setState(m.playlistId, { running: true, step: m.step });

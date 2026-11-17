@@ -5,8 +5,9 @@ compatibility_date = "2026-11-01"
 compatibility_flags = ["allow_custom_ports"]
 
 [vars]
-# Comma-separated origins allowed to call the proxy (your Pages domain and localhost for development).
-ALLOWED_ORIGINS = "http://localhost:5173,https://web-player.pages.dev"
+# Comma-separated origins allowed to call the proxy (your Pages domain, localhost for development,
+# and "null" for the Samsung TV app, which runs from file://). Every route still needs a signed token.
+ALLOWED_ORIGINS = "http://localhost:5173,https://web-player.pages.dev,null"
 
 # Secrets (set with `wrangler secret put NAME`):
 #   TOKEN_SECRET            random string, signs short-lived proxy tokens

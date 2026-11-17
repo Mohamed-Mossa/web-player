@@ -1,0 +1,52 @@
+name: Samsung TV app
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/**'
+      - 'apps/tizen/**'
+      - 'packages/**'
+      - '.github/workflows/tizen.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tizen
+  cancel-in-progress: true
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    env:
+      VITE_API_BASE: ${{ vars.API_BASE }}
+      VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+      VITE_SENTRY_DSN: ${{ vars.SENTRY_DSN }}
+      VITE_APP_URL: ${{ vars.APP_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build, check for Chromium 69, package
+        working-directory: apps/web
+        run: |
+          echo "VERSION_NAME=$(node -p "require('./package.json').version")-${GITHUB_SHA::7}" >> $GITHUB_ENV
+          pnpm build:tizen
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tizen-app-${{ env.VERSION_NAME }}
+          path: apps/web/tizen-app.zip
+      - name: Publish to the "tizen-latest" release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view tizen-latest >/dev/null 2>&1 || gh release create tizen-latest --title "Samsung TV (latest build)" --notes "Built automatically from main." --prerelease
+          gh release upload tizen-latest apps/web/tizen-app.zip --clobber
+          gh release edit tizen-latest --notes "Version ${VERSION_NAME}, commit ${GITHUB_SHA::7}. Download tizen-app.zip and install it with apps/tizen/install.ps1 (Windows) or install.sh. Setup: apps/tizen/README.md"

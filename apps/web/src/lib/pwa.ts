@@ -1,10 +1,12 @@
 import { create } from 'zustand';
+import { IS_TIZEN } from '../env';
 
 export const usePwa = create<{ needRefresh: boolean; update: (() => Promise<void>) | null }>()(() => ({ needRefresh: false, update: null }));
 
 export async function registerPwa() {
   // The Android app updates through OTA bundles (src/native/ota.ts), not the service worker.
-  if (import.meta.env.DEV || !('serviceWorker' in navigator) || (window as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()) return;
+  // The Samsung package is installed from a .wgt file; no service worker there either.
+  if (IS_TIZEN || import.meta.env.DEV || !('serviceWorker' in navigator) || (window as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()) return;
   const { registerSW } = await import('virtual:pwa-register');
   const updateSW = registerSW({
     immediate: true,

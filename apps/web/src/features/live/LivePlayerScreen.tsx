@@ -10,7 +10,7 @@ import { toggleFavorite, useIsFavorite } from '../../data/items';
 import { db } from '../../db/db';
 import { loadSecret } from '../../lib/crypto';
 import { viaProxy } from '../../lib/http';
-import { isNative } from '../../lib/platform';
+import { isNative, directNet } from '../../lib/platform';
 import { Focusable, FocusSection } from '../../nav/focus';
 import { useApp } from '../../state/app';
 import { netConfig } from '../../sync/catalogSync';
@@ -78,7 +78,7 @@ export function LivePlayerScreen() {
         const pl = await db.playlists.get(playlistId);
         if (secret?.type !== 'xtream') return;
         const url = new XtreamClient(secret, async () => ({})).catchupUrl(c.id, catchupStart, Math.ceil((catchupStop - catchupStart) / 60_000), pl?.account?.serverTimezone);
-        await player.load({ url: isNative() ? url : viaProxy(url, netConfig()), live: false, kindHint: 'file', title: c.title });
+        await player.load({ url: directNet() ? url : viaProxy(url, netConfig()), live: false, kindHint: 'file', title: c.title });
       } else {
         const src = await resolveStream('live', playlistId, c);
         if (!cancelled) await player.load({ ...src, title: c.title, poster: c.logo });

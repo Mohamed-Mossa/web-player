@@ -81,3 +81,31 @@ html.native-video body,
 html.native-video #root {
   background: transparent !important;
 }
+
+/* Fallback for browsers without aspect-ratio (Samsung 2020 TVs): a spacer gives the box its height. */
+.aspect-fallback-2x3 {
+  display: none;
+}
+.no-aspect .aspect-fallback-2x3 {
+  display: block;
+  padding-top: 150%;
+}
+
+/* Flex gap fallback (see src/lib/flexGap.ts). In the base layer so utilities like ms-auto still win. */
+@layer base {
+  [data-fg='l'] > * + * {
+    margin-left: var(--fg-x);
+  }
+  [data-fg='r'] > * + * {
+    margin-right: var(--fg-x);
+  }
+  [data-fg='t'] > * + * {
+    margin-top: var(--fg-y);
+  }
+  [data-fg='b'] > * + * {
+    margin-bottom: var(--fg-y);
+  }
+  [data-fgw] > * {
+    margin-bottom: var(--fg-y);
+  }
+}

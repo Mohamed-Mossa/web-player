@@ -1,6 +1,7 @@
 import type { PlaylistSecret } from '@iptv/core';
 import { db } from '../db/db';
 import { loadSecret, saveSecret } from '../lib/crypto';
+import { aesGcm, importAesKey, pbkdf2, toBase64 } from '../lib/cipher';
 import { queryClient } from '../lib/query';
 import { syncPlaylist } from '../sync/catalogSync';
 import { useApp } from '../state/app';
@@ -18,12 +19,12 @@ interface BackupFile {
   data: string;
 }
 
-const b64 = (b: ArrayBuffer | Uint8Array) => btoa(String.fromCharCode(...new Uint8Array(b instanceof Uint8Array ? b : new Uint8Array(b))));
+const b64 = toBase64;
 const unb64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0)) as Uint8Array<ArrayBuffer>;
 
-async function keyFrom(pass: string, salt: Uint8Array<ArrayBuffer>) {
-  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']);
-  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 250_000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+// Same result as WebCrypto deriveKey(PBKDF2 → AES-256), so old backups still open.
+async function keyFrom(pass: string, salt: Uint8Array) {
+  return importAesKey(await pbkdf2(pass, salt, 250_000));
 }
 
 const TABLES = ['profiles', 'favorites', 'categoryPrefs', 'progress', 'channelGroups', 'reminders'] as const;
@@ -39,7 +40,7 @@ export async function exportBackup(passphrase: string): Promise<Blob> {
   const plain = JSON.stringify({ playlists: playlists.map(({ account, accountCheckedAt, pingMs, lastSyncAt, syncError, counts, epgUpdatedAt, epgError, epgCount, ...p }) => p), secrets, tables, settings });
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const data = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await keyFrom(passphrase, salt), new TextEncoder().encode(plain));
+  const data = await aesGcm('encrypt', await keyFrom(passphrase, salt), iv, new TextEncoder().encode(plain));
   const file: BackupFile = { format: 'iptv-backup', version: 1, createdAt: new Date().toISOString(), salt: b64(salt), iv: b64(iv), data: b64(data) };
   return new Blob([JSON.stringify(file)], { type: 'application/json' });
 }
@@ -51,7 +52,7 @@ export async function importBackup(text: string, passphrase: string): Promise<{ 
   if (file.format !== 'iptv-backup') throw new Error('Not a backup file');
   let plain: ArrayBuffer;
   try {
-    plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(file.iv) }, await keyFrom(passphrase, unb64(file.salt)), unb64(file.data));
+    plain = await aesGcm('decrypt', await keyFrom(passphrase, unb64(file.salt)), unb64(file.iv), unb64(file.data));
   } catch {
     throw new BadPassphrase('Wrong passphrase');
   }

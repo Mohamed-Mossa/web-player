@@ -1,4 +1,6 @@
 /// <reference lib="webworker" />
+import 'virtual-worker-polyfills';
+import { textDecoderStream } from '../lib/streams';
 import {
   M3UCatalogBuilder, M3UParser, XtreamClient, XtreamError, credsFromM3UUrl, diffRows,
   type CatalogItem, type CatalogSnapshot, type Kind, type PlaylistSecret,
@@ -56,8 +58,8 @@ async function m3uSnapshot(playlistId: string, url: string, net: NetConfig): Pro
   const res = await fetchWithTimeout(url, net, 180_000);
   const parser = new M3UParser();
   const builder = new M3UCatalogBuilder(playlistId, creds);
-  if (res.body && 'TextDecoderStream' in self) {
-    const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+  if (res.body) {
+    const reader = res.body.pipeThrough(textDecoderStream()).getReader();
     for (;;) {
       const { value, done } = await reader.read();
       if (done) break;

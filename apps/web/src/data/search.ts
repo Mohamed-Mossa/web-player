@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { SearchDoc, SearchRequest, SearchResponse } from '../workers/search.worker';
 import { usePlaylists } from './catalog';
+import { createSearchWorker } from 'virtual-worker-factory';
 
 let worker: Worker | null = null;
 let reqSeq = 0;
@@ -8,7 +9,7 @@ const listeners = new Map<number, (r: SearchResponse) => void>();
 
 function getWorker() {
   if (!worker) {
-    worker = new Worker(new URL('../workers/search.worker.ts', import.meta.url), { type: 'module' });
+    worker = createSearchWorker();
     worker.onmessage = (ev: MessageEvent<SearchResponse>) => listeners.get(ev.data.reqId)?.(ev.data);
   }
   return worker;

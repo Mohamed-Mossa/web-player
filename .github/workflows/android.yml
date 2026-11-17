@@ -25,6 +25,7 @@ jobs:
       VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
       VITE_SENTRY_DSN: ${{ vars.SENTRY_DSN }}
+      VITE_APP_URL: ${{ vars.APP_URL }}
       VERSION_CODE: ${{ github.run_number }}
     steps:
       - uses: actions/checkout@v4

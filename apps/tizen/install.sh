@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Installs the IPTV Player on a Samsung TV (2020 or newer) from macOS or Linux.
+# One-time setup: see apps/tizen/README.md.
+#
+#   ./install.sh 192.168.1.50                    # downloads the latest build from GitHub
+#   ./install.sh 192.168.1.50 ./tizen-app.zip
+#   PROFILE=mytv ./install.sh 192.168.1.50       # certificate profile name, default "iptv"
+set -euo pipefail
+TV_IP="${1:?usage: install.sh <tv-ip> [tizen-app.zip]}"
+ZIP="${2:-}"
+PROFILE="${PROFILE:-iptv}"
+APP_ID="IptvMousa1.IPTVPlayer"
+RELEASE="https://github.com/Mohamed-Mossa/web-player/releases/download/tizen-latest/tizen-app.zip"
+STUDIO="${TIZEN_STUDIO:-$HOME/tizen-studio}"
+TIZEN="$STUDIO/tools/ide/bin/tizen"
+SDB="$STUDIO/tools/sdb"
+[ -x "$TIZEN" ] || { echo "Tizen Studio not found at $STUDIO (set TIZEN_STUDIO)"; exit 1; }
+
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
+if [ -z "$ZIP" ]; then
+  echo "Downloading the latest build..."
+  ZIP="$WORK/tizen-app.zip"
+  curl -fL "$RELEASE" -o "$ZIP"
+fi
+mkdir "$WORK/app"
+unzip -q "$ZIP" -d "$WORK/app"
+
+echo "Signing with certificate profile '$PROFILE'..."
+"$TIZEN" package -t wgt -s "$PROFILE" -- "$WORK/app"
+WGT="$(cd "$WORK/app" && ls *.wgt | head -1)"
+
+echo "Connecting to the TV at $TV_IP..."
+"$SDB" connect "$TV_IP"
+SERIAL="$TV_IP:26101"
+"$SDB" -s "$SERIAL" get-state >/dev/null || { echo "The TV refused the connection. Is Developer Mode on, with this computer's IP as the host?"; exit 1; }
+
+echo "Installing..."
+"$TIZEN" install -n "$WGT" -s "$SERIAL" -- "$WORK/app"
+"$TIZEN" run -p "$APP_ID" -s "$SERIAL"
+echo 'Done. The app is in the TV'"'"'s Apps list as "IPTV Player".'

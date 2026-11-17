@@ -1,10 +1,13 @@
 declare const __APP_VERSION__: string;
 declare const __GIT_SHA__: string;
 declare const __BUILD_TIME__: string;
+declare const __TIZEN__: boolean;
 
 export const APP_VERSION = __APP_VERSION__;
 export const GIT_SHA = __GIT_SHA__;
 export const BUILD_TIME = __BUILD_TIME__;
+/** True in the Samsung TV (Tizen) package build. */
+export const IS_TIZEN = __TIZEN__;
 
 /** Base URL of the Cloudflare Worker (proxy + TMDB/OpenSubtitles relay). Empty = direct requests. */
 export const API_BASE: string = (import.meta.env.VITE_API_BASE as string | undefined)?.replace(/\/$/, '') ?? '';
@@ -26,4 +29,7 @@ export const SUPABASE_URL: string = (import.meta.env.VITE_SUPABASE_URL as string
 export const SUPABASE_ANON_KEY: string = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ?? '';
 export const SENTRY_DSN: string = (import.meta.env.VITE_SENTRY_DSN as string | undefined) ?? '';
 /** Public address of the web app (used in the TV sign-in QR code). */
-export const APP_URL: string = ((import.meta.env.VITE_APP_URL as string | undefined) ?? (typeof location !== 'undefined' ? location.origin : '')).replace(/\/$/, '');
+export const APP_URL: string = (
+  (import.meta.env.VITE_APP_URL as string | undefined) ??
+  (typeof location !== 'undefined' && location.protocol.startsWith('http') ? location.origin : '')
+).replace(/\/$/, '');
