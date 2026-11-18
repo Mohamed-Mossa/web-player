@@ -19,13 +19,27 @@ $ErrorActionPreference = 'Stop'
 $AppId = 'IptvMousa1.IPTVPlayer'
 $Release = 'https://github.com/Mohamed-Mossa/web-player/releases/download/tizen-latest/tizen-app.zip'
 
-if (-not $TizenStudio) {
-  $TizenStudio = @("$env:USERPROFILE\tizen-studio", 'C:\tizen-studio') | Where-Object { Test-Path $_ } | Select-Object -First 1
+# Find the Tizen CLI and sdb: Tizen Studio (older) or the newer Tizen SDK used by the VS Code extension.
+function Find-Tool([string]$root, [string]$name) {
+  if (-not $root -or -not (Test-Path $root)) { return $null }
+  $known = @{ 'tizen.bat' = 'tools\ide\bin\tizen.bat'; 'sdb.exe' = 'tools\sdb.exe' }[$name]
+  $p = Join-Path $root $known
+  if (Test-Path $p) { return $p }
+  $hit = Get-ChildItem -Path $root -Filter $name -Recurse -Depth 4 -ErrorAction SilentlyContinue | Select-Object -First 1
+  if ($hit) { return $hit.FullName }
+  return $null
 }
-if (-not $TizenStudio) { throw 'Tizen Studio not found. Install it, or pass -TizenStudio <folder>.' }
-$tizen = Join-Path $TizenStudio 'tools\ide\bin\tizen.bat'
-$sdb = Join-Path $TizenStudio 'tools\sdb.exe'
-foreach ($t in @($tizen, $sdb)) { if (-not (Test-Path $t)) { throw "Missing $t - is Tizen Studio complete?" } }
+$roots = @($TizenStudio, "$env:USERPROFILE\tizen-studio", 'C:\tizen-studio', "$env:USERPROFILE\tizen-sdk", 'C:\tizen-sdk', "$env:LOCALAPPDATA\tizen-studio", "$env:LOCALAPPDATA\tizen-sdk") | Where-Object { $_ }
+$tizen = (Get-Command tizen.bat, tizen -ErrorAction SilentlyContinue | Select-Object -First 1).Source
+$sdb = (Get-Command sdb.exe, sdb -ErrorAction SilentlyContinue | Select-Object -First 1).Source
+foreach ($r in $roots) {
+  if (-not $tizen) { $tizen = Find-Tool $r 'tizen.bat' }
+  if (-not $sdb) { $sdb = Find-Tool $r 'sdb.exe' }
+}
+if (-not $tizen -or -not $sdb) {
+  throw 'Could not find the Tizen CLI (tizen.bat) and sdb.exe. Install Tizen Studio or the Tizen SDK, or pass -TizenStudio <its folder>.'
+}
+Write-Host "Using $tizen"
 
 $work = Join-Path $env:TEMP 'iptv-tizen'
 if (Test-Path $work) { Remove-Item -Recurse -Force $work }

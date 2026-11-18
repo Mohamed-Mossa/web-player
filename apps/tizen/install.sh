@@ -11,10 +11,20 @@ ZIP="${2:-}"
 PROFILE="${PROFILE:-iptv}"
 APP_ID="IptvMousa1.IPTVPlayer"
 RELEASE="https://github.com/Mohamed-Mossa/web-player/releases/download/tizen-latest/tizen-app.zip"
-STUDIO="${TIZEN_STUDIO:-$HOME/tizen-studio}"
-TIZEN="$STUDIO/tools/ide/bin/tizen"
-SDB="$STUDIO/tools/sdb"
-[ -x "$TIZEN" ] || { echo "Tizen Studio not found at $STUDIO (set TIZEN_STUDIO)"; exit 1; }
+# Tizen CLI and sdb: Tizen Studio (older) or the newer Tizen SDK used by the VS Code extension
+find_tool() { # name
+  command -v "$1" 2>/dev/null && return
+  for root in "${TIZEN_STUDIO:-}" "$HOME/tizen-studio" "$HOME/tizen-sdk" /opt/tizen-studio /opt/tizen-sdk; do
+    [ -n "$root" ] && [ -d "$root" ] || continue
+    for p in "$root/tools/ide/bin/$1" "$root/tools/$1"; do [ -x "$p" ] && { echo "$p"; return; }; done
+    p="$(find "$root" -maxdepth 5 -type f -name "$1" -perm -u+x 2>/dev/null | head -1)"
+    [ -n "$p" ] && { echo "$p"; return; }
+  done
+}
+TIZEN="$(find_tool tizen || true)"
+SDB="$(find_tool sdb || true)"
+[ -n "$TIZEN" ] && [ -n "$SDB" ] || { echo "Tizen CLI/sdb not found. Install Tizen Studio or the Tizen SDK, or set TIZEN_STUDIO=<its folder>."; exit 1; }
+echo "Using $TIZEN"
 
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT

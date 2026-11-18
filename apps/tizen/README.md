@@ -10,9 +10,13 @@ Samsung only installs apps signed for your TV, so the last step (signing + insta
 
 ## One-time setup
 
-1. **Tizen Studio** (free): install "Tizen Studio with IDE" (or the CLI-only package) from
-   developer.tizen.org. In its **Package Manager** → *Extension SDK*, install **Samsung Certificate Extension**
-   (and *TV Extensions* if offered).
+1. **Samsung's developer tools** (free). Samsung is moving from the old Eclipse-based *Tizen Studio* (last
+   version 6.1, April 2025, maintained until the end of 2025) to the *Tizen SDK* with a VS Code extension
+   (Tizen SDK 10.0, November 2025). Either works: the install scripts only need the `tizen` command-line
+   tool, `sdb` and a Samsung certificate, and they look for them in both layouts. Install the
+   **Samsung Certificate Extension** (Package Manager → *Extension SDK*) and *TV Extensions* if offered.
+   If installing later fails with a certificate or "parsing" error, people on Samsung's forum fixed it by
+   creating the certificate with an older Certificate Manager (2.0.65).
 2. **TV in Developer Mode**: open *Apps* on the TV, press `1 2 3 4 5` on the remote, switch
    *Developer mode* **On**, enter your computer's IP address, then restart the TV (hold the power button).
    Computer and TV must be on the same network.
